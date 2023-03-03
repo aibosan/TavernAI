@@ -2923,6 +2923,15 @@
                 if(char_id === this_chid) {
                     if(this_invited_ids.length) {
                         this_chid = this_invited_ids[0];
+                    } else {
+                        this_chid = null;
+                        clearChat();
+                        chat.length = 0;
+                        getChat();
+                    }
+                    let i = this_invited_ids.indexOf(parseInt(char_id));
+                    if(i >= 0) {
+                        this_invited_ids.splice(i, 1);
                     }
                 } else { // select
                     let i = this_invited_ids.indexOf(parseInt(char_id));
