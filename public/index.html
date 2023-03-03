@@ -2906,7 +2906,7 @@
                             is_user: false,
                             chid: char_id,
                             send_date: Date.now(),
-                            mes: char.first_mes
+                            mes: chat.filter(m => m.is_user).length ? "*Joins in*" : char.first_mes
                         });
                     }
                     addOneMessage(chat[chat.length - 1]);
