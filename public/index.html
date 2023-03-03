@@ -54,6 +54,7 @@
             var is_colab = false;
             var is_checked_colab = false;
             var is_mes_reload_avatar = false;
+            var multichat = false;
             
             var is_advanced_char_open = false;
             
@@ -493,6 +494,32 @@
                 }
                 return mes;
             }
+            function parseMultipleMessages(messageFull) {
+                messageFull.split("\n").forEach((text) => {
+                    text = text.trim();
+                    const splat = text.split(":");
+                    if(text.length) {
+                        let char;
+                        let chid;
+                        if (splat.length > 0) {
+                            characters.forEach((ch, id) => {
+                                if (ch.name === splat[0]) {
+                                    char = ch;
+                                    chid = id;
+                                }
+                            });
+                        }
+                        chat.push({
+                            name: char ? char.name : name2,
+                            is_user: false,
+                            chid: chid ? chid : undefined,
+                            send_date: Date.now(),
+                            mes: char ? text.replace(/^[^:]*:/, '') : text
+                        });
+                        addOneMessage(chat[chat.length - 1]);
+                    }
+                });
+            }
             function addOneMessage(mes){
                 //var message = mes['mes'];
                 //message = mes['mes'].replace(/^\s+/g, '');
@@ -503,12 +530,13 @@
                 generatedPromtCache = '';
                 //thisText = thisText.split("\n").join("<br>");
                 var avatarImg = "User Avatars/"+user_avatar;
+                let chid = mes.chid || this_chid;
                 if(!mes['is_user']){
-                    if(this_chid == undefined){
+                    if(chid == undefined){
                         avatarImg = "img/chloe.png";
                     }else{
-                        if(characters[this_chid].avatar != 'none'){
-                            avatarImg = "characters/"+characters[this_chid].avatar;
+                        if(characters[chid].avatar != 'none'){
+                            avatarImg = "characters/"+characters[chid].avatar;
                             if(is_mes_reload_avatar !== false){
                                 avatarImg+="#"+is_mes_reload_avatar;
                                 //console.log(avatarImg);
@@ -517,7 +545,7 @@
                             avatarImg = "img/fluffy.png";
                         }
                     }
-                    characterName = name2;
+                    characterName = chid && characters[chid] ? characters[chid].name : name2;
                 }
                 
                 //Formating
@@ -1052,15 +1080,19 @@
                                     }
                                     if(type === 'force_name2') this_mes_is_name = true;
                                     //getMessage = getMessage.replace(/^\s+/g, '');
-                                    if(getMessage.length > 0){
-                                        chat[chat.length] = {};
-                                        chat[chat.length-1]['name'] = name2;
-                                        chat[chat.length-1]['is_user'] = false;
-                                        chat[chat.length-1]['is_name'] = this_mes_is_name;
-                                        chat[chat.length-1]['send_date'] = Date.now();
-                                        getMessage = $.trim(getMessage);
-                                        chat[chat.length-1]['mes'] = getMessage;
-                                        addOneMessage(chat[chat.length-1]);
+                                    if(getMessage.length > 0 && $.trim(getMessage).length){
+                                        if(multichat) {
+                                            parseMultipleMessages($.trim(getMessage));
+                                        } else {
+                                            chat[chat.length] = {};
+                                            chat[chat.length-1]['name'] = name2;
+                                            chat[chat.length-1]['is_user'] = false;
+                                            chat[chat.length-1]['is_name'] = this_mes_is_name;
+                                            chat[chat.length-1]['send_date'] = Date.now();
+                                            getMessage = $.trim(getMessage);
+                                            chat[chat.length-1]['mes'] = getMessage;
+                                            addOneMessage(chat[chat.length-1]);
+                                        }
                                         $( "#send_but" ).css("display", "block");
                                         $( "#loading_mes" ).css("display", "none");
                                         saveChat();
@@ -1745,13 +1777,17 @@
                                 if(this_ch_mes != $.trim($("#chat").children('.mes').children('.mes_block').children('.mes_text').text())){
                                     clearChat();
                                     chat.length = 0;
-                                    chat[0] = {};
-                                    chat[0]['name'] = name2;
-                                    chat[0]['is_user'] = false;
-                                    chat[0]['is_name'] = true;
-                                    chat[0]['mes'] = this_ch_mes;
-                                    add_mes_without_animation = true;
-                                    addOneMessage(chat[0]);
+                                    if(multichat) {
+                                        parseMultipleMessages(this_ch_mes);
+                                    } else {
+                                        chat[0] = {};
+                                        chat[0]['name'] = name2;
+                                        chat[0]['is_user'] = false;
+                                        chat[0]['is_name'] = true;
+                                        chat[0]['mes'] = this_ch_mes;
+                                        add_mes_without_animation = true;
+                                        addOneMessage(chat[0]);
+                                    }
                                 }
                             }
                             $('#create_button').removeAttr("disabled");
@@ -2161,7 +2197,8 @@
                                     $('#your_name').val(name1);
                                 }
                             }
-                            
+
+                            multichat = !!settings.multichat;
                             
                             //Novel
                             if(settings.main_api != undefined){
@@ -2328,6 +2365,7 @@
                             anchor_order: anchor_order,
                             style_anchor: style_anchor,
                             character_anchor: character_anchor,
+                            multichat: multichat,
                             main_api: main_api,
                             api_key_novel: api_key_novel,
                             rep_pen: rep_pen,
