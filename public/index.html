@@ -2920,6 +2920,7 @@
             });
             $(document).on('click', '.kick_block', function(){
                 let char_id = $(this).attr("char_id");
+                let kicked = characters[char_id];
                 if(char_id === this_chid) {
                     if(this_invited_ids.length) {
                         this_chid = this_invited_ids[0];
@@ -2938,6 +2939,16 @@
                     if(i >= 0) {
                         this_invited_ids.splice(i, 1);
                     }
+                }
+                if(kicked) {
+                    chat.push({
+                        name: kicked.name,
+                        is_user: false,
+                        chid: char_id,
+                        send_date: Date.now(),
+                        mes: "*Leaves.*"
+                    });
+                    addOneMessage(chat[chat.length - 1]);
                 }
                 $('#shadow_kick_popup').css('display', 'none');
             });
