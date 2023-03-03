@@ -779,7 +779,7 @@
                         if(chat[j]['is_name']){
                             chat2[i] = this_mes_ch_name+': '+chat[j]['mes']+'\n';
                         }else{
-                            chat2[i] = chat[j]['mes']+'\n';
+                            chat2[i] = (chat[i].name ? chat[i].name + ": " : "") + chat[j]['mes']+'\n';
                         }
                         j++;
                     }
