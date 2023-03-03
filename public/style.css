@@ -1311,6 +1311,8 @@ label.checkbox :checked + span:after {
     text-align: center;
 }
 
+#shadow_kick_popup,
+#shadow_invite_popup,
 #shadow_select_chat_popup{
     display: none;
     opacity: 1.0;
@@ -1320,6 +1322,8 @@ label.checkbox :checked + span:after {
     z-index: 2059;
     background-color: #00000066;
 }
+#kick_popup,
+#invite_popup,
 #select_chat_popup{
     display: block;
     grid-template-rows: 50px 100px 100px auto 45px;
@@ -1339,9 +1343,19 @@ label.checkbox :checked + span:after {
     background: #191b31F0;
     border-radius: 5px;
 }
+#kick_popup,
+#invite_popup {
+    overflow-y: auto;
+}
+#kick_popup a,
+#invite_popup a,
 #select_chat_popup a{
     color: #936f4a;
 }
+#kick_popup a:hover {
+    color: #ff8e6b;
+}
+#invite_popup a:hover,
 #select_chat_popup a:hover{
     color: #998e6b;
 }
@@ -1384,6 +1398,8 @@ label.checkbox :checked + span:after {
     cursor:pointer;
 }
 
+.kick_block,
+.invite_block,
 .select_chat_block{
     border-radius: 5px;
     margin-right: 10px;
@@ -1392,15 +1408,18 @@ label.checkbox :checked + span:after {
     grid-template-columns: 60px auto;
     grid-template-rows: 26px auto;
 }
+.kick_block:hover,
+.invite_block:hover,
 .select_chat_block:hover {
     background-color: #ffffff07;
 }
+.kick_block[highlight],
+.invite_block[highlight],
 .select_chat_block[highlight]{
     background-color: #ffffff09;/* #c2b07a12; */
 }
 
 .select_chat_block .avatar{
-
     grid-row: span 2;
 }
 
@@ -1410,6 +1429,29 @@ label.checkbox :checked + span:after {
 .select_chat_block_mes{
     margin-right: 6px;
 }
+
+.kick_block,
+.invite_block {
+    display: inline-block !important;
+}
+.kick_block .avatar,
+.invite_block .avatar {
+    padding: 6px 0px;
+}
+.kick_block .avatar img,
+.invite_block .avatar img {
+    margin: auto;
+}
+.kick_block .kick_block_name
+.invite_block .invite_block_name {
+    text-align: center;
+}
+.kick_block.disabled,
+.invite_block.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
 #advanced_div{
     font-size: 14px;
     background-repeat: no-repeat;

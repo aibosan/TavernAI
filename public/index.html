@@ -49,6 +49,7 @@
             var generatedPromtCache = '';
             var characters = [];
             var this_chid;
+            var this_invited_ids = [];
             var backgrounds = [];
             var default_avatar = 'img/fluffy.png';
             var is_colab = false;
@@ -700,26 +701,29 @@
                     }
                     if(charDescription !== undefined){
                         if(charDescription.length > 0){
-                            charDescription = charDescription.replace(/{{user}}/gi, name1);
-                            charDescription = charDescription.replace(/{{char}}/gi, name2);
-                            charDescription = charDescription.replace(/<USER>/gi, name1);
-                            charDescription = charDescription.replace(/<BOT>/gi, name2);
+                            charDescription = charDescription
+                                .replace(/{{user}}/gi, name1)
+                                .replace(/{{char}}/gi, name2)
+                                .replace(/<USER>/gi, name1)
+                                .replace(/<BOT>/gi, name2);
                         }
                     }
                     if(charPersonality !== undefined){
                         if(charPersonality.length > 0){
-                            charPersonality = charPersonality.replace(/{{user}}/gi, name1);
-                            charPersonality = charPersonality.replace(/{{char}}/gi, name2);
-                            charPersonality = charPersonality.replace(/<USER>/gi, name1);
-                            charPersonality = charPersonality.replace(/<BOT>/gi, name2);
+                            charPersonality = charPersonality
+                                .replace(/{{user}}/gi, name1)
+                                .replace(/{{char}}/gi, name2)
+                                .replace(/<USER>/gi, name1)
+                                .replace(/<BOT>/gi, name2);
                         }
                     }
                     if(Scenario !== undefined){
                         if(Scenario.length > 0){
-                            Scenario = Scenario.replace(/{{user}}/gi, name1);
-                            Scenario = Scenario.replace(/{{char}}/gi, name2);
-                            Scenario = Scenario.replace(/<USER>/gi, name1);
-                            Scenario = Scenario.replace(/<BOT>/gi, name2);
+                            Scenario = Scenario
+                                .replace(/{{user}}/gi, name1)
+                                .replace(/{{char}}/gi, name2)
+                                .replace(/<USER>/gi, name1)
+                                .replace(/<BOT>/gi, name2);
                         }
                     }
                     
@@ -942,7 +946,43 @@
                         }else{
                             mesSendString = '<START>\n'+mesSendString;
                         }
-                        finalPromt = storyString+mesExmString+mesSendString+generatedPromtCache;
+
+                        let multiprompt = [];
+                        if(multichat) {
+                            let participants = [ name1, name2 ];
+                            this_invited_ids.forEach(chid => {
+                                const char = characters[chid];
+                                if(char) {
+                                    participants.push(char.name);
+                                    if(char.description) {
+                                        multiprompt.push(char.name + "'s Persona: " +
+                                            char.description
+                                            .replace(/{{user}}/gi, name1)
+                                            .replace(/{{char}}/gi, char.name)
+                                            .replace(/<USER>/gi, name1)
+                                            .replace(/<BOT>/gi, char.name)
+                                        );
+                                    }
+                                    if(char.personality) {
+                                        multiprompt.push("Personality: " +
+                                            char.personality
+                                            .replace(/{{user}}/gi, name1)
+                                            .replace(/{{char}}/gi, char.name)
+                                            .replace(/<USER>/gi, name1)
+                                            .replace(/<BOT>/gi, char.name)
+                                        );
+                                    }
+                                }
+                            });
+                            if(!mesSendString) {
+                                mesSendString = '\nThen the roleplay chat between ' + participants.join(" and ") + ' begins.\n'+mesSendString;
+                            }
+                            multiprompt = multiprompt.join("\n") + (multiprompt.length ? "\n" : "");
+                        } else {
+                            multiprompt = "";
+                        }
+
+                        finalPromt = storyString+mesExmString+multiprompt+mesSendString+generatedPromtCache;
                         
                         var generate_data;
                         if(main_api == 'kobold'){
@@ -1927,6 +1967,18 @@
                     $('#shadow_select_chat_popup').transition({ opacity: 1.0 ,duration: animation_rm_duration, easing:animation_rm_easing});
                 }
             });
+            $( "#option_invite" ).click(function() {
+                getCharactersToInvite();
+                $('#shadow_invite_popup').css('display', 'block');
+                $('#shadow_invite_popup').css('opacity', 0.0);
+                $('#shadow_invite_popup').transition({ opacity: 1.0 ,duration: animation_rm_duration, easing:animation_rm_easing});
+            });
+            $( "#option_kick" ).click(function() {
+                getCharactersToKick();
+                $('#shadow_kick_popup').css('display', 'block');
+                $('#shadow_kick_popup').css('opacity', 0.0);
+                $('#shadow_kick_popup').transition({ opacity: 1.0 ,duration: animation_rm_duration, easing:animation_rm_easing});
+            });
             $( "#option_start_new_chat" ).click(function() {
                 if(this_chid != undefined && !is_send_press){
                     popup_type = 'new_chat';
@@ -2199,6 +2251,14 @@
                             }
 
                             multichat = !!settings.multichat;
+                            if(!multichat) {
+                                $('#option_invite').css('display', 'none');
+                                $('#option_kick').css('display', 'none');
+                                $('#multichat_hr').css('display', 'none');
+                            } else {
+                                $('#options').css('bottom', '296px');
+                            }
+
                             
                             //Novel
                             if(settings.main_api != undefined){
@@ -2421,12 +2481,16 @@
                 });
             });
             $('#select_chat_cross').click(function(){
-
-
                 $('#shadow_select_chat_popup').css('display', 'none');
                 $('#load_select_chat_div').css('display', 'block');
             });
-            
+            $('#invite_cross').click(function(){
+                $('#shadow_invite_popup').css('display', 'none');
+            });
+            $('#kick_cross').click(function(){
+                $('#shadow_kick_popup').css('display', 'none');
+            });
+
             function isInt(value) {
                 return !isNaN(value) && 
                     parseInt(Number(value)) == value && 
@@ -2571,6 +2635,28 @@
                         console.log(exception);
                         console.log(jqXHR);
                     }
+                });
+            }
+            // Invite character
+            function getCharactersToInvite() {
+                $('#invite_div').html('');
+                characters.forEach((item, chid) => {
+                    const invited = this_chid == chid || this_invited_ids.indexOf(chid) >= 0;
+                    $('#invite_div').append('<div class="invite_block' + (invited ? " disabled" : "") + '" char_id="'+chid+'" char_name="'+item.name+'">' +
+                        '<div class=avatar><img src="characters/'+item['avatar']+'"></div>' +
+                        '<div class="invite_block_name">'+item['name']+'</div>' +
+                        '</div>');
+                });
+            }
+            // Kick character
+            function getCharactersToKick() {
+                $('#kick_div').html('');
+                characters.forEach((item, chid) => {
+                    const invited = this_chid == chid || this_invited_ids.indexOf(chid) >= 0;
+                    $('#kick_div').append('<div class="kick_block' + (!invited ? " disabled" : "") + '" char_id="'+chid+'" char_name="'+item.name+'">' +
+                        '<div class=avatar><img src="characters/'+item['avatar']+'"></div>' +
+                        '<div class="kick_block_name">'+item['name']+'</div>' +
+                        '</div>');
                 });
             }
             //************************************************************
@@ -2796,6 +2882,7 @@
             $(document).on('click', '.select_chat_block', function(){
                 let file_name = $(this).attr("file_name").replace('.jsonl', '');
                 //console.log(characters[this_chid]['chat']);
+                this_invited_ids = [];
                 characters[this_chid]['chat'] = file_name;
                 clearChat();
                 chat.length = 0;
@@ -2804,7 +2891,46 @@
                 $("#create_button").click();
                 $('#shadow_select_chat_popup').css('display', 'none');
                 $('#load_select_chat_div').css('display', 'block');
-
+            });
+            $(document).on('click', '.invite_block', function(){
+                let char_id = $(this).attr("char_id");
+                if(!characters[char_id] || this_chid == char_id) { return; }
+                if(this_chid) { // invite
+                    if(this_invited_ids.indexOf(char_id) < 0) {
+                        this_invited_ids.push(parseInt(char_id));
+                    }
+                    const char = characters[char_id];
+                    if(char.first_mes) {
+                        chat.push({
+                            name: char.name,
+                            is_user: false,
+                            chid: char_id,
+                            send_date: Date.now(),
+                            mes: char.first_mes
+                        });
+                    }
+                    addOneMessage(chat[chat.length - 1]);
+                } else { // select
+                    this_chid = char_id;
+                    clearChat();
+                    chat.length = 0;
+                    getChat();
+                }
+                $('#shadow_invite_popup').css('display', 'none');
+            });
+            $(document).on('click', '.kick_block', function(){
+                let char_id = $(this).attr("char_id");
+                if(char_id === this_chid) {
+                    if(this_invited_ids.length) {
+                        this_chid = this_invited_ids[0];
+                    }
+                } else { // select
+                    let i = this_invited_ids.indexOf(parseInt(char_id));
+                    if(i >= 0) {
+                        this_invited_ids.splice(i, 1);
+                    }
+                }
+                $('#shadow_kick_popup').css('display', 'none');
             });
         });
     </script>
@@ -2890,6 +3016,32 @@
             </div>
 
 
+        </div>
+    </div>
+    <div id="shadow_invite_popup">
+        <div id="invite_popup">
+            <div id="invite_div">
+
+            </div>
+            <div id="invite_popup_text">
+                <img id="invite_cross" src="img/cross.png" style="position: absolute; right: 15px; top:14px; width: 20px; height: 20px; cursor: pointer; opacity: 0.6">
+
+                <!--<h3 style="margin: 0px;margin-left: 5px;margin-top: 5px;">Select chat</h3>-->
+
+            </div>
+        </div>
+    </div>
+    <div id="shadow_kick_popup">
+        <div id="kick_popup">
+            <div id="kick_div">
+
+            </div>
+            <div id="kick_popup_text">
+                <img id="kick_cross" src="img/cross.png" style="position: absolute; right: 15px; top:14px; width: 20px; height: 20px; cursor: pointer; opacity: 0.6">
+
+                <!--<h3 style="margin: 0px;margin-left: 5px;margin-top: 5px;">Select chat</h3>-->
+
+            </div>
         </div>
     </div>
     <div id="shadow_tips_popup">
@@ -3119,6 +3271,9 @@
                         <a id="option_select_chat"><img src="img/book6.png" width="20" height="20" style="opacity: 0.0;"><img src="img/book6.png" style="width: 21px;height: 21px;position: absolute;top: 59px;left: 15px; opacity: 0.5;">Select chats</a><!--<img src="img/book6.png" style="width: 21px;height: 21px;position: absolute;top: 14px;left: 16px; opacity: 0.5;">Select chat</a>-->
                         
                         <hr>
+                        <a id="option_invite"><img src="img/plus.png" width="20" height="20">Invite character</a>
+                        <a id="option_kick"><img src="img/minus.png" width="20" height="20">Kick character</a>
+                        <hr id="multichat_hr">
                         <a id="option_delete_mes"><img src="img/del_mes.png" width="20" height="20">Delete message</a>
                         <a id="option_regenerate"><img src="img/regenerate.png" width="20" height="20">Regenerate</a>
                         </div>
