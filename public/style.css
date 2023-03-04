@@ -1204,7 +1204,7 @@ label.checkbox :checked + span:after {
     margin-left: 10px;
     float: left;
     display: grid;
-    grid-template-rows: 30px auto;
+    grid-template-rows: 30px 30px auto;
     grid-template-columns: auto auto;
 }
 

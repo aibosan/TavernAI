@@ -2224,6 +2224,10 @@
                 $('#rep_pen_size_counter_novel').html( $(this).val()+" Tokens");
                 var repPenSizeTimer_novel = setTimeout(saveSettings, 500);
             });
+            $(document).on('input', '#multichat_checkbox', function() {
+                multichat = !multichat;
+                saveSettings("change_name");
+            });
             //***************SETTINGS****************//
             ///////////////////////////////////////////
             async function getSettings(type){//timer
@@ -2256,8 +2260,10 @@
                                 $('#option_invite').css('display', 'none');
                                 $('#option_kick').css('display', 'none');
                                 $('#multichat_hr').css('display', 'none');
+                                $('#multichat_checkbox').prop("checked", false);
                             } else {
                                 $('#options').css('bottom', '296px');
+                                $('#multichat_checkbox').prop("checked", true);
                             }
 
                             
@@ -3251,7 +3257,9 @@
                     <label class="checkbox" >
                         <input id="style_anchor" type="checkbox"/><span></span>
                     </label><h4>Style Anchor</h4>
-                    
+                    <label class="checkbox" title="Allows you to invite multiple characters to the conversation. Requires restart.">
+                        <input id="multichat_checkbox" type="checkbox"/><span></span>
+                    </label><h4>Multichat</h4>
                 </div>
             </div>
         </div>
