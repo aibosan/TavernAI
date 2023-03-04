@@ -471,6 +471,7 @@
                 }
             }
             function printMessages(){
+
                 chat.forEach(function(item, i, arr) {
                     addOneMessage(item);
                 });
@@ -496,6 +497,7 @@
                 return mes;
             }
             function parseMultipleMessages(messageFull) {
+                let lastMessage;
                 messageFull.split("\n").forEach((text) => {
                     text = text.trim();
                     const splat = text.split(":");
@@ -510,16 +512,27 @@
                                 }
                             });
                         }
-                        chat.push({
-                            name: char ? char.name : name2,
-                            is_user: false,
-                            chid: chid ? chid : undefined,
-                            send_date: Date.now(),
-                            mes: char ? text.replace(/^[^:]*:/, '') : text
-                        });
-                        addOneMessage(chat[chat.length - 1]);
+                        if(lastMessage && lastMessage.chid === chid ? chid : undefined) {
+                            lastMessage.mes += "\n" + (char ? text.replace(/^[^:]*:/, '') : text);
+                        } else {
+                            if(lastMessage) {
+                                chat.push(lastMessage);
+                                addOneMessage(chat[chat.length - 1]);
+                            }
+                            lastMessage = ({
+                                name: char ? char.name : name2,
+                                is_user: false,
+                                chid: chid ? chid : undefined,
+                                send_date: Date.now(),
+                                mes: char ? text.replace(/^[^:]*:/, '') : text
+                            });
+                        }
                     }
                 });
+                if(lastMessage) {
+                    chat.push(lastMessage);
+                    addOneMessage(chat[chat.length - 1]);
+                }
             }
             function addOneMessage(mes){
                 //var message = mes['mes'];
