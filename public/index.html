@@ -1460,7 +1460,9 @@
                 $("#chat_import_avatar_url").val(characters[chid].avatar);
                 $("#chat_import_character_name").val(characters[chid].name);
                 //$("#avatar_div").css("display", "none");
-                $("#avatar_load_preview").attr('src',("#avatar_load_preview").attr('src').replace(/#.*/)+"#"+Date.now());
+                if($("#avatar_load_preview").attr){
+                    $("#avatar_load_preview").attr('src', $("#avatar_load_preview").attr('src').replace(/#.*/) + "#" + Date.now());
+                }
                 $("#name_div").css("display", "none");
                 
                 $("#form_create").attr("actiontype", "editcharacter");
