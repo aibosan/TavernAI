@@ -921,7 +921,9 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
                 const parsed = JSON.parse(line);
                 if(parsed.name && !parsed.is_user && parsed.chid !== undefined && parsed.chid !== null) {
                     if(parsed.leave) {
-                        delete chids[parsed.chid];
+                        if(chids[parsed.chid]) {
+                            delete chids[parsed.chid];
+                        }
                     } else {
                         chids[parsed.chid] = parsed.name;
                     }
