@@ -521,7 +521,7 @@
                             lastMessage = ({
                                 name: char ? char.name : name2,
                                 is_user: false,
-                                chid: chid ? parseInt(chid) : parseInt(this_chid),
+                                chid: chid !== undefined && chid !== null ? parseInt(chid) : parseInt(this_chid),
                                 send_date: Date.now(),
                                 mes: char ? text.replace(/^[^:]*:/, '') : text
                             });
@@ -543,7 +543,7 @@
                 generatedPromtCache = '';
                 //thisText = thisText.split("\n").join("<br>");
                 var avatarImg = "User Avatars/"+user_avatar;
-                let chid = mes.chid || this_chid;
+                let chid = mes.chid !== undefined && mes.chid !== null ? mes.chid : this_chid;
                 if(!mes['is_user']){
                     if(chid == undefined){
                         avatarImg = "img/chloe.png";
@@ -558,7 +558,7 @@
                             avatarImg = "img/fluffy.png";
                         }
                     }
-                    characterName = chid && characters[chid] ? characters[chid].name : name2;
+                    characterName = chid !== undefined && chid !== null && characters[chid] ? characters[chid].name : name2;
                 }
                 
                 //Formating
