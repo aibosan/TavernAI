@@ -629,10 +629,14 @@
                         
                     }else{
                         var textareaText = "";
-                        if(chat[chat.length-1]['is_user']){//If last message from You
-                            
-                        }else{
-                            chat.length = chat.length-1;
+                        let del = true;
+                        while(del) {
+                            const last = chat[chat.length-1];
+                            if(!last || last.is_user || last.join || last.leave) {
+                                del = false;
+                                break;
+                            }
+                            chat.pop();
                             count_view_mes-=1;
                             $('#chat').children().last().remove();
                         }
