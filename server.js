@@ -914,9 +914,14 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
             });
 
             let lastLine;
+            let chids = {};
 
             rl.on('line', (line) => {
                 lastLine = line;
+                const parsed = JSON.parse(line);
+                if(parsed.name && !parsed.is_user && parsed.chid !== undefined && parsed.chid !== null) {
+                    chids[parsed.chid] = parsed.name;
+                }
             });
 
             rl.on('close', () => {
@@ -926,6 +931,7 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
                         chatData[i] = {};
                         chatData[i]['file_name'] = file;
                         chatData[i]['mes'] = jsonData['mes'];
+                        chatData[i]['chars'] = chids;
                         ii--;
                         if(ii === 0){ 
                             response.send(chatData);

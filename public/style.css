@@ -280,14 +280,19 @@ code {
   border-style: none;
   padding:6px;
   padding-bottom:20px;
+    display: flex;
+    align-items: center;
+    padding-right: 1ex;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .avatar img {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  /*height: 100%;*/
   object-fit: cover;
   object-position: center center;
-  border-radius: 10px;
+  border-radius: 10%;
 }
 .mes_block{
     

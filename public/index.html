@@ -521,7 +521,7 @@
                             lastMessage = ({
                                 name: char ? char.name : name2,
                                 is_user: false,
-                                chid: chid ? parseInt(chid) : undefined,
+                                chid: chid ? parseInt(chid) : parseInt(this_chid),
                                 send_date: Date.now(),
                                 mes: char ? text.replace(/^[^:]*:/, '') : text
                             });
@@ -1277,6 +1277,7 @@
                     chat[0]['name'] = name2;
                     chat[0]['is_user'] = false;
                     chat[0]['is_name'] = true;
+                    chat[0]['chid'] = parseInt(this_chid);
                     chat[0]['send_date'] = Date.now();
                     if(characters[this_chid].first_mes != ""){
                         chat[0]['mes'] = characters[this_chid].first_mes;
@@ -1875,6 +1876,7 @@
                                         chat[0]['name'] = name2;
                                         chat[0]['is_user'] = false;
                                         chat[0]['is_name'] = true;
+                                        chat[0]['chid'] = parseInt(this_chid);
                                         chat[0]['mes'] = this_ch_mes;
                                         add_mes_without_animation = true;
                                         addOneMessage(chat[0]);
@@ -2671,7 +2673,28 @@
                             if(mes.length > strlen){
                                 mes = '...'+mes.substring(mes.length - strlen);
                             }
-                            $('#select_chat_div').append('<div class="select_chat_block" file_name="'+data[key]['file_name']+'"><div class=avatar><img src="characters/'+characters[this_chid]['avatar']+'" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">'+data[key]['file_name']+'</div><div class="select_chat_block_mes">'+mes+'</div></div>');
+
+                            let avatars = [];
+                            if(data[key].chars) {
+                                let totalChars = 0;
+                                for(let id in data[key].chars) {
+                                    if (characters[id]) {
+                                        totalChars++;
+                                    }
+                                }
+                                const maxHeight = totalChars ? (1/Math.ceil(Math.sqrt(totalChars)))*100 + "%" : "100%"
+                                for(let id in data[key].chars) {
+                                    if(characters[id]) {
+                                        avatars.push('<img src="characters/'+characters[id].avatar+'" style="max-height:' +maxHeight+ '">');
+                                    }
+                                }
+
+                            }
+                            if(!avatars.length) {
+                                avatars.push('<img src="characters/'+characters[this_chid]['avatar']+'">');
+                            }
+
+                            $('#select_chat_div').append('<div class="select_chat_block" file_name="'+data[key]['file_name']+'"><div class=avatar>' + avatars.join("") + '</div><div class="select_chat_block_filename">'+data[key]['file_name']+'</div><div class="select_chat_block_mes">'+mes+'</div></div>');
                             if(characters[this_chid]['chat'] == data[key]['file_name'].replace('.jsonl', '')){
                                 //children().last()
                                 $('#select_chat_div').children(':nth-last-child(1)').attr('highlight', true);
