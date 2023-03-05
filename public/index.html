@@ -1475,9 +1475,13 @@
                 $("#chat_import_avatar_url").val(characters[chid].avatar);
                 $("#chat_import_character_name").val(characters[chid].name);
                 //$("#avatar_div").css("display", "none");
-                if($("#avatar_load_preview").attr){
-                    $("#avatar_load_preview").attr('src', $("#avatar_load_preview").attr('src').replace(/#.*/) + "#" + Date.now());
+
+                var this_avatar = default_avatar;
+                if(characters[chid].avatar != 'none'){
+                    this_avatar = "characters/"+characters[chid].avatar;
                 }
+                $("#avatar_load_preview").attr('src',this_avatar+"#"+Date.now());
+
                 $("#name_div").css("display", "none");
                 
                 $("#form_create").attr("actiontype", "editcharacter");
@@ -1844,7 +1848,17 @@
 
                             $('.mes').each(function(){
                                 if($(this).attr('ch_name') != name1){
-                                    $(this).children('.avatar').children('img').attr('src', $('#avatar_load_preview').attr('src'));
+                                    let avatar;
+                                    characters.forEach(ch => {
+                                        if(ch.name === $(this).attr('ch_name')) {
+                                            avatar = ch.avatar;
+                                        }
+                                    });
+                                    if(avatar) {
+                                        $(this).children('.avatar').children('img').attr('src', "characters/" + avatar + "#" + Date.now());
+                                    } else {
+                                        $(this).children('.avatar').children('img').attr('src', $('#avatar_load_preview').attr('src'));
+                                    }
                                 }
                             });
                             if(chat.length === 1 ){
@@ -3027,10 +3041,10 @@
     <!--<div id="shadow_character_popup">
         </div>-->
         <div id="character_popup">
-            
+
             <div id="character_popup_text">
                 <img id="character_cross" src="img/cross.png" style="position: absolute; right: 15px; top: 15px; width: 20px; height: 20px; cursor: pointer; opacity: 0.6">
-                
+
                 <div><img src="img/book2.png" id="advanced_book_logo"><h3 id="character_popup_text_h3" style="margin-left: 38px;">Create character</h3></div>
             
             </div>
