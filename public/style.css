@@ -1451,6 +1451,7 @@ label.checkbox :checked + span:after {
 .invite_block .invite_block_name {
     text-align: center;
 }
+.kick_block.host,
 .kick_block.disabled,
 .invite_block.disabled {
     pointer-events: none;

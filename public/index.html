@@ -2733,7 +2733,8 @@
                 $('#kick_div').html('');
                 characters.forEach((item, chid) => {
                     const invited = this_chid == chid || this_invited_ids.indexOf(chid) >= 0;
-                    $('#kick_div').append('<div class="kick_block' + (!invited ? " disabled" : "") + '" char_id="'+chid+'" char_name="'+item.name+'">' +
+                    const host = this_chid == chid;
+                    $('#kick_div').append('<div class="kick_block' + (!invited ? " disabled" : "") + (host ? " host" : "") + '" char_id="'+chid+'" char_name="'+item.name+'">' +
                         '<div class=avatar><img src="characters/'+item['avatar']+'"></div>' +
                         '<div class="kick_block_name">'+item['name']+'</div>' +
                         '</div>');
