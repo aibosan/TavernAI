@@ -920,7 +920,11 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
                 lastLine = line;
                 const parsed = JSON.parse(line);
                 if(parsed.name && !parsed.is_user && parsed.chid !== undefined && parsed.chid !== null) {
-                    chids[parsed.chid] = parsed.name;
+                    if(parsed.leave) {
+                        delete chids[parsed.chid];
+                    } else {
+                        chids[parsed.chid] = parsed.name;
+                    }
                 }
             });
 
