@@ -471,7 +471,6 @@
                 }
             }
             function printMessages(){
-
                 chat.forEach(function(item, i, arr) {
                     addOneMessage(item);
                 });
@@ -1272,6 +1271,20 @@
                     }else{
                         chat[0]['mes'] = default_ch_mes;
                     }
+                    this_invited_ids.forEach(chid => {
+                        const ch = characters[chid];
+                        if(ch) {
+                            count_view_mes++;
+                            chat.push({
+                                name: ch.name,
+                                is_user: false,
+                                is_name: false,
+                                chid: chid,
+                                send_date: Date.now(),
+                                mes: ch.first_mes && ch.first_mes.length ? ch.first_mes : "Joins in."
+                            });
+                        }
+                    });
                 }
                 printMessages();
                 select_selected_character(this_chid);
@@ -1447,11 +1460,7 @@
                 $("#chat_import_avatar_url").val(characters[chid].avatar);
                 $("#chat_import_character_name").val(characters[chid].name);
                 //$("#avatar_div").css("display", "none");
-                var this_avatar = default_avatar;
-                if(characters[chid].avatar != 'none'){
-                        this_avatar = "characters/"+characters[chid].avatar;
-                }
-                $("#avatar_load_preview").attr('src',this_avatar+"#"+Date.now());
+                $("#avatar_load_preview").attr('src',("#avatar_load_preview").attr('src').replace(/#.*/)+"#"+Date.now());
                 $("#name_div").css("display", "none");
                 
                 $("#form_create").attr("actiontype", "editcharacter");
@@ -2846,7 +2855,7 @@
             });
             $('#export_button').click(function(){
                 var link = document.createElement('a');
-                link.href = 'characters/'+characters[this_chid].avatar;  
+                link.href = 'characters/'+characters[this_chid].avatar;
                 link.download = characters[this_chid].avatar;
                 document.body.appendChild(link);
                 link.click();
