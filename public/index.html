@@ -1260,13 +1260,11 @@
                             if(item.join) {
                                 if(this_invited_ids.indexOf(item.chid) < 0) {
                                     this_invited_ids.push(parseInt(item.chid));
-                                    console.warn(true, item.chid, this_invited_ids.slice());
                                 }
                             } else
                             if(item.leave) {
                                 if(this_invited_ids.indexOf(item.chid) >= 0) {
                                     this_invited_ids.splice(this_invited_ids.indexOf(parseInt(item.chid)), 1);
-                                    console.warn(false, item.chid, this_invited_ids.slice());
                                 }
                             }
                         }
