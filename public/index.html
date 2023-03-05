@@ -521,7 +521,7 @@
                             lastMessage = ({
                                 name: char ? char.name : name2,
                                 is_user: false,
-                                chid: chid ? chid : undefined,
+                                chid: chid ? parseInt(chid) : undefined,
                                 send_date: Date.now(),
                                 mes: char ? text.replace(/^[^:]*:/, '') : text
                             });
@@ -1256,6 +1256,20 @@
                             chat[i]['mes'] = str;
                             chat[i]['name'] = name1;
                         }
+                        if(item.chid !== undefined && item.chid !== null) {
+                            if(item.join) {
+                                if(this_invited_ids.indexOf(item.chid) < 0) {
+                                    this_invited_ids.push(parseInt(item.chid));
+                                    console.warn(true, item.chid, this_invited_ids.slice());
+                                }
+                            } else
+                            if(item.leave) {
+                                if(this_invited_ids.indexOf(item.chid) >= 0) {
+                                    this_invited_ids.splice(this_invited_ids.indexOf(parseInt(item.chid)), 1);
+                                    console.warn(false, item.chid, this_invited_ids.slice());
+                                }
+                            }
+                        }
                     });
 
                     
@@ -1279,7 +1293,8 @@
                                 name: ch.name,
                                 is_user: false,
                                 is_name: false,
-                                chid: chid,
+                                chid: parseInt(chid),
+                                join: true,
                                 send_date: Date.now(),
                                 mes: ch.first_mes && ch.first_mes.length ? ch.first_mes : "Joins in."
                             });
@@ -1476,7 +1491,6 @@
                         clearChat();
                         chat.length = 0;
                         getChat();
-                        
                     }
                 }else{
                     this_invited_ids = [];
@@ -2935,7 +2949,8 @@
                         chat.push({
                             name: char.name,
                             is_user: false,
-                            chid: char_id,
+                            chid: parseInt(char_id),
+                            join: true,
                             send_date: Date.now(),
                             mes: chat.filter(m => m.is_user).length ? "*Joins in*" : char.first_mes
                         });
@@ -2975,7 +2990,8 @@
                     chat.push({
                         name: kicked.name,
                         is_user: false,
-                        chid: char_id,
+                        chid: parseInt(char_id),
+                        leave: true,
                         send_date: Date.now(),
                         mes: "*Leaves.*"
                     });
