@@ -504,7 +504,8 @@
                 messageFull.split("\n").every((text) => {
                     text = text.trim();
                     const splat = text.split(":");
-                    if(!(text.length > 1 ? text[1] : text[0]).replace(/[\*]/g, "").length) {
+                    const msgContent = (splat.length > 1 ? splat[1] : splat[0]).trim().replace(/([!?.*])[^!?.*]*$/, "$1");
+                    if(!msgContent.replace(/[\*]/g, "").length || characters.filter(ch => msgContent.match(new RegExp("/^" + ch.name + "&/"))).length) {
                         return true;
                     }
                     if(text.length) {
@@ -522,7 +523,7 @@
                             this_last_speaker_id = null;        // reset priority speaker if other character speaks up
                         }
                         if(lastMessage && lastMessage.chid === chid ? chid : undefined) {
-                            lastMessage.mes += "\n" + (char ? text.replace(/^[^:]*:/, '') : text);
+                            lastMessage.mes += "\n" + msgContent;
                         } else {
                             if(lastMessage) {
                                 chat.push(lastMessage);
@@ -533,7 +534,7 @@
                                 is_user: false,
                                 chid: chid !== undefined && chid !== null ? parseInt(chid) : parseInt(this_chid),
                                 send_date: Date.now(),
-                                mes: char ? text.replace(/^[^:]*:/, '') : text
+                                mes: msgContent
                             });
                         }
                     }
