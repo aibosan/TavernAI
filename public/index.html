@@ -58,7 +58,7 @@
             var is_mes_reload_avatar = false;
             var multichat = false;
 
-            var multi_priority = null; /* 0 default 1 context from last message 2 talkativness 3 mixed */
+            var multi_priority = null; /* default, context, loquacity, mixed */
             
             var is_advanced_char_open = false;
             
@@ -950,7 +950,7 @@
                                     if(tail || multi_priority !== "mixed") {
                                         break;
                                     }
-                                case "talkativeness":
+                                case "loquacity":
                                     if(tail) {
                                         break;
                                     }
@@ -2366,12 +2366,23 @@
                                 $('#option_kick').css('display', 'none');
                                 $('#multichat_hr').css('display', 'none');
                                 $('#multichat_checkbox').prop("checked", false);
+                                $("#multi_priority_select").css("display", "none");
                             } else {
                                 $('#options').css('bottom', '296px');
                                 $('#multichat_checkbox').prop("checked", true);
+                                $("#multi_priority_select").css("display", null);
                             }
 
                             multi_priority = settings.multi_priority || null;
+                            const mps = document.getElementById("multi_priority_select");
+                            for(let i = 0; i < mps.children.length; i++) {
+                                const ch = mps.children[i];
+                                if(ch.value == multi_priority) {
+                                    ch.setAttribute("selected", "selected");
+                                } else {
+                                    ch.removeAttribute("selected");
+                                }
+                            }
                             
                             //Novel
                             if(settings.main_api != undefined){
@@ -2872,6 +2883,11 @@
             }
             $( "#model_novel_select" ).change(function() {
                 model_novel = $('#model_novel_select').find(":selected").val();
+                saveSettings();
+            });
+            $( "#multi_priority_select" ).change(function() {
+                let value = $('#multi_priority_select').find(":selected").val();
+                multi_priority = value.length ? value : null;
                 saveSettings();
             });
             $( "#anchor_order" ).change(function() {
@@ -3382,6 +3398,12 @@
                 <select id="anchor_order">
                     <option value="0">Character Anchor - Style Anchor</option>
                     <option value="1">Style Anchor - Character Anchor</option>
+                </select>
+                <h5>Chat priority (multichat only)</h5><select id="multi_priority_select">
+                    <option value="" title="The host (the first character) gets priority">Host</option>
+                    <option value="context" title="A character mentioned by name becomes the priority character">Address</option>
+                    <option value="talkativeness" title="Each character has talkativeness rating, which determines who gets the priority" disabled="disabled">Loquacity</option>
+                    <option value="mixed" title="Both of the above - if no character is addressed, the more talkative character likely gets to talk" disabled="disabled">Mixed</option>
                 </select>
                 <div id="anchor_checkbox">
                     <label class="checkbox">

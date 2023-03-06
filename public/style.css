@@ -285,6 +285,7 @@ code {
     padding-right: 1ex;
     flex-wrap: wrap;
     justify-content: center;
+    border-radius
 }
 
 .avatar img {
@@ -1197,6 +1198,7 @@ label.checkbox :checked + span:after {
   color: #99a1a7;
 
 }
+#multi_priority_select,
 #anchor_order{
     width:284px;
     margin-left: 10px;
