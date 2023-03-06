@@ -394,7 +394,7 @@ function checkServer(){
 
 //***************** Main functions
 function charaFormatData(data){
-    var char = {"name": data.ch_name, "description": data.description, "personality": data.personality, "first_mes": data.first_mes, "avatar": 'none', "chat": Date.now(), "mes_example": data.mes_example, "scenario": data.scenario, "create_date": Date.now()};
+    var char = {"name": data.ch_name, "description": data.description, "personality": data.personality, "first_mes": data.first_mes, "avatar": 'none', "chat": Date.now(), "mes_example": data.mes_example, "scenario": data.scenario, "talkativeness": data.talkativeness, "create_date": Date.now()};
     return char;
 }
 app.post("/createcharacter", urlencodedParser, function(request, response){
@@ -444,8 +444,8 @@ app.post("/editcharacter", urlencodedParser, function(request, response){
     var fileType = ".png";
     var img_file = "ai";
     var img_path = charactersPath;
-    
-    var char = charaFormatData(request.body);//{"name": request.body.ch_name, "description": request.body.description, "personality": request.body.personality, "first_mes": request.body.first_mes, "avatar": request.body.avatar_url, "chat": request.body.chat, "last_mes": request.body.last_mes, "mes_example": ''};
+
+    var char = charaFormatData(request.body);//{"name": request.body.ch_name, "description": request.body.description, "personality": request.body.personality, "first_mes": request.body.first_mes, "avatar": request.body.avatar_url, "chat": request.body.chat, "last_mes": request.body.last_mes, "mes_example": '', "talkativeness": request.body.talkativeness};
     char.chat = request.body.chat;
     char.create_date = request.body.create_date;
 

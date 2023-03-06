@@ -58,7 +58,7 @@
             var is_mes_reload_avatar = false;
             var multichat = false;
 
-            var multi_priority = null; /* default, context, loquacity, mixed */
+            var multi_priority = null; /* default, context, talkativeness, mixed */
             
             var is_advanced_char_open = false;
             
@@ -72,6 +72,7 @@
             var create_save_avatar = '';
             var create_save_scenario = '';
             var create_save_mes_example = '';
+            var talkativeness = 3;
             
             var timerSaveEdit;
             var durationSaveEdit = 200;
@@ -950,7 +951,20 @@
                                     if(tail || multi_priority !== "mixed") {
                                         break;
                                     }
-                                case "loquacity":
+                                case "talkativeness":
+                                    let options = [];
+                                    for(let key in characters) {
+                                        if(key === this_chid || this_invited_ids.indexOf(key)) {
+                                            for(let i = 1; i < characters.talkativeness || 3; i++) {
+                                                options.push(key);
+                                            }
+                                        }
+                                    }
+                                    if(options.length) {
+                                        this_last_speaker_id = options[Math.floor(Math.random() * options.length)];
+                                        tail = characters[this_last_speaker_id].name + ":";
+                                    }
+                                    console.warn(tail);
                                     if(tail) {
                                         break;
                                     }
@@ -1526,6 +1540,7 @@
                 $("#avatar_url_pole").val(characters[chid].avatar);
                 $("#chat_import_avatar_url").val(characters[chid].avatar);
                 $("#chat_import_character_name").val(characters[chid].name);
+                $("#input_talkativeness").val(parseInt(characters[chid].talkativeness) || 3);
                 //$("#avatar_div").css("display", "none");
 
                 var this_avatar = default_avatar;
@@ -1851,7 +1866,8 @@
                                 create_save_personality = '';
                                 $("#firstmessage_textarea").val('');
                                 create_save_first_message = '';
-                                
+                                $("#input_talkativeness").val(3);
+                                talkativeness = 3;
                                 $("#character_popup_text_h3").text('Create character');
                                 
                                 $("#scenario_pole").val('');
@@ -2015,6 +2031,14 @@
                 
                 if(menu_type == 'create'){
                     create_save_first_message = $('#firstmessage_textarea').val();
+                }else{
+                    timerSaveEdit = setTimeout(() => {$("#create_button").click();},durationSaveEdit);
+                }
+            });
+            $('#input_talkativeness').on('change', function(){
+                characters[this_chid].talkativeness = parseInt($('#input_talkativeness').val());
+                if(menu_type == 'create'){
+                    talkativeness = $('#input_talkativeness').val();
                 }else{
                     timerSaveEdit = setTimeout(() => {$("#create_button").click();},durationSaveEdit);
                 }
@@ -2367,6 +2391,7 @@
                                 $('#multichat_hr').css('display', 'none');
                                 $('#multichat_checkbox').prop("checked", false);
                                 $("#multi_priority_select").css("display", "none");
+                                $("#input_talkativeness").css("display", "none");
                             } else {
                                 $('#options').css('bottom', '296px');
                                 $('#multichat_checkbox').prop("checked", true);
@@ -3279,6 +3304,9 @@
                 <div id="first_message_div">
                 <h4>First message</h4><h5>First message from the character (<a href="/notes/3" target="_blank">?</a>)</h5>
                 <textarea id="firstmessage_textarea" name="first_mes" placeholder=""></textarea>
+                <br>
+                <h4>Talkativeness</h4><h5>How likely a character will talk compared to others</h5>
+                <input type="range" id="input_talkativeness" name="talkativeness" form="form_create" min="1" max="5" step="1"/>
                 </div>
                 
                 <div id="avatar_url_div">
@@ -3402,8 +3430,8 @@
                 <h5>Chat priority (multichat only)</h5><select id="multi_priority_select">
                     <option value="" title="The host (the first character) gets priority">Host</option>
                     <option value="context" title="A character mentioned by name becomes the priority character">Address</option>
-                    <option value="talkativeness" title="Each character has talkativeness rating, which determines who gets the priority" disabled="disabled">Loquacity</option>
-                    <option value="mixed" title="Both of the above - if no character is addressed, the more talkative character likely gets to talk" disabled="disabled">Mixed</option>
+                    <option value="talkativeness" title="Each character has talkativeness rating, which determines who gets the priority">Talkativeness</option>
+                    <option value="mixed" title="Both of the above - if no character is addressed, the more talkative character likely gets to talk">Mixed</option>
                 </select>
                 <div id="anchor_checkbox">
                     <label class="checkbox">

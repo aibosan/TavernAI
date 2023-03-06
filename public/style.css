@@ -1437,6 +1437,11 @@ label.checkbox :checked + span:after {
     margin-right: 6px;
 }
 
+#input_talkativeness {
+    margin: 0 2%;
+    width: 96%;
+}
+
 .kick_block,
 .invite_block {
     display: inline-block !important;
