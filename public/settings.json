@@ -11,6 +11,7 @@
   "style_anchor": false,
   "character_anchor": true,
   "multichat": true,
+  "multi_priority": "context",
   "main_api": "kobold",
   "api_key_novel": "",
   "rep_pen": 1.17,

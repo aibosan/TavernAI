@@ -49,6 +49,7 @@
             var generatedPromtCache = '';
             var characters = [];
             var this_chid;
+            var this_last_speaker_id;
             var this_invited_ids = [];
             var backgrounds = [];
             var default_avatar = 'img/fluffy.png';
@@ -56,6 +57,8 @@
             var is_checked_colab = false;
             var is_mes_reload_avatar = false;
             var multichat = false;
+
+            var multi_priority = null; /* 0 default 1 context from last message 2 talkativness 3 mixed */
             
             var is_advanced_char_open = false;
             
@@ -476,6 +479,7 @@
                 });
             }
             function clearChat(){
+                this_last_speaker_id = null;
                 count_view_mes = 0;
                 $('#chat').html('');
             }
@@ -497,12 +501,15 @@
             }
             function parseMultipleMessages(messageFull) {
                 let lastMessage;
-                messageFull.split("\n").forEach((text) => {
+                messageFull.split("\n").every((text) => {
                     text = text.trim();
                     const splat = text.split(":");
+                    if(!(text.length > 1 ? text[1] : text[0]).replace(/[\*]/g, "").length) {
+                        return true;
+                    }
                     if(text.length) {
-                        let char;
-                        let chid;
+                        let chid = this_last_speaker_id !== undefined && this_last_speaker_id !== null ? this_last_speaker_id : this_chid;
+                        let char = characters[chid];
                         if (splat.length > 0) {
                             characters.forEach((ch, id) => {
                                 if (ch.name === splat[0]) {
@@ -510,6 +517,9 @@
                                     chid = id;
                                 }
                             });
+                        }
+                        if(this_last_speaker_id !== chid) {
+                            this_last_speaker_id = null;        // reset priority speaker if other character speaks up
                         }
                         if(lastMessage && lastMessage.chid === chid ? chid : undefined) {
                             lastMessage.mes += "\n" + (char ? text.replace(/^[^:]*:/, '') : text);
@@ -527,6 +537,7 @@
                             });
                         }
                     }
+                    return true;
                 });
                 if(lastMessage) {
                     chat.push(lastMessage);
@@ -781,22 +792,13 @@
                     var j = 0;
                     for(var i = chat.length-1; i >= 0; i--){
                         if(j == 0){
-                            chat[j]['mes'] = chat[j]['mes'].replace(/{{user}}/gi, name1);
-                            chat[j]['mes'] = chat[j]['mes'].replace(/{{char}}/gi, name2);
-                            chat[j]['mes'] = chat[j]['mes'].replace(/<USER>/gi, name1);
-                            chat[j]['mes'] = chat[j]['mes'].replace(/<BOT>/gi, name2);
+                            chat[j]['mes'] = chat[j]['mes']
+                                .replace(/{{user}}/gi, name1)
+                                .replace(/{{char}}/gi, name2)
+                                .replace(/<USER>/gi, name1)
+                                .replace(/<BOT>/gi, name2);
                         }
-                        let this_mes_ch_name = '';
-                        if(chat[j]['is_user']){
-                            this_mes_ch_name = name1;
-                        }else{
-                            this_mes_ch_name = name2;
-                        }
-                        if(chat[j]['is_name']){
-                            chat2[i] = this_mes_ch_name+': '+chat[j]['mes']+'\n';
-                        }else{
-                            chat2[i] = (chat[i].name ? chat[i].name + ": " : "") + chat[j]['mes']+'\n';
-                        }
+                        chat2.unshift((chat[j]['is_user'] ? name1 : (chat[j].name || name2)) + ": " + chat[j].mes + "\n");
                         j++;
                     }
                     //chat2 = chat2.reverse();
@@ -872,7 +874,6 @@
                             arrMes = arrMes.reverse();
                             var is_add_personality = false;
                             arrMes.forEach(function(item, i, arr) {//For added anchors and others
-
                                 if(i >= arrMes.length-1 && $.trim(item).substr(0, (name1+":").length) != name1+":"){
                                     if(textareaText == ""){
                                         item = item.substr(0,item.length-1);
@@ -894,6 +895,7 @@
                                     item =item+ anchorBottom+"\n";
                                 }
                                 if(is_pygmalion){
+                                    /*
                                     if(i >= arrMes.length-1 && $.trim(item).substr(0, (name1+":").length) == name1+":"){//for add name2 when user sent
                                         item =item+name2+":";
                                     }
@@ -902,6 +904,7 @@
                                             item =item+'\n'+name2+":";
                                         }
                                     }
+                                    */
                                     if($.trim(item).indexOf(name1) === 0){
                                         item = item.replace(name1+':', 'You:');
                                     }
@@ -915,13 +918,93 @@
 
                         //console.log(encode(characters[this_chid].description+chatString).length);
                         //console.log(encode(JSON.stringify(characters[this_chid].description+chatString)).length);
-                        if(type == 'force_name2'){
-                            finalPromt+= name2+':';
+                        let tail = name2+':';
+                        this_last_speaker_id = this_last_speaker_id !== undefined && this_last_speaker_id !== null ? this_last_speaker_id : this_chid;
+                        if(multichat && multi_priority) {
+                            switch(multi_priority) {
+                                case "mixed":
+                                case "context":
+                                    let i = chat.length-1;
+                                    let lastPlayerChat = chat[i];
+                                    while(lastPlayerChat && !lastPlayerChat.is_user) {
+                                        if(i < 0) { break; }
+                                        lastPlayerChat = chat[i];
+                                        i--;
+                                    }
+                                    if(lastPlayerChat) {
+                                        let viableCandidates = [];
+                                        let participants = this_invited_ids.slice();
+                                        participants.push(this_chid);
+                                        participants.forEach(chid => {
+                                            if(lastPlayerChat.mes.toLowerCase().match(new RegExp(characters[chid].name.toLowerCase()))) {
+                                                viableCandidates.push(chid);
+                                            }
+                                        });
+                                        if(viableCandidates.length) {
+                                            let speakerId = viableCandidates[Math.floor(Math.random() * viableCandidates.length)];
+                                            this_last_speaker_id = speakerId;
+                                            tail = characters[speakerId].name + ":";
+                                        }
+                                    }
+                                    if(tail || multi_priority !== "mixed") {
+                                        break;
+                                    }
+                                case "talkativeness":
+                                    if(tail) {
+                                        break;
+                                    }
+                                    break;
+                            }
+                            if(!tail) {
+                                tail = name2+':'
+                            }
+                        }
+
+                        if(is_pygmalion) {
+                            mesSend.push(tail);
+                        } else if(type == 'force_name2'){
+                            finalPromt += tail;
                         }
                         //console.log(JSON.stringify(storyString));
                         //Send story string
                         var mesSendString = '';
                         var mesExmString = '';
+
+                        let multiprompt = [];
+                        if(multichat) {
+                            let participants = [ name1, name2 ];
+                            this_invited_ids.forEach(chid => {
+                                const char = characters[chid];
+                                if(char) {
+                                    participants.push(char.name);
+                                    if(char.description) {
+                                        multiprompt.push(char.name + "'s Persona: " +
+                                            char.description
+                                                .replace(/{{user}}/gi, name1)
+                                                .replace(/{{char}}/gi, char.name)
+                                                .replace(/<USER>/gi, name1)
+                                                .replace(/<BOT>/gi, char.name)
+                                        );
+                                    }
+                                    if(char.personality) {
+                                        multiprompt.push("Personality: " +
+                                            char.personality
+                                                .replace(/{{user}}/gi, name1)
+                                                .replace(/{{char}}/gi, char.name)
+                                                .replace(/<USER>/gi, name1)
+                                                .replace(/<BOT>/gi, char.name)
+                                        );
+                                    }
+                                }
+                            });
+                            if(!mesSendString) {
+                                mesSendString = '\nThen the roleplay chat between ' + participants.join(" and ") + ' begins.\n'+mesSendString;
+                            }
+                            multiprompt = multiprompt.join("\n") + (multiprompt.length ? "\n" : "");
+                        } else {
+                            multiprompt = "";
+                        }
+
                         function setPromtString(){
                             mesSendString = '';
                             mesExmString = '';
@@ -934,7 +1017,7 @@
                         }
                         function checkPromtSize(){
                             setPromtString();
-                            let thisPromtContextSize = encode(JSON.stringify(storyString+mesExmString+mesSendString+anchorTop+anchorBottom+charPersonality+generatedPromtCache)).length+120;
+                            let thisPromtContextSize = encode(JSON.stringify(storyString+mesExmString+multiprompt+mesSendString+anchorTop+anchorBottom+charPersonality+generatedPromtCache)).length+120;
                             if(thisPromtContextSize > this_max_context){
                                 if(count_exm_add > 0){
                                     //mesExamplesArray.length = mesExamplesArray.length-1;
@@ -961,41 +1044,6 @@
                             mesSendString = '\nThen the roleplay chat between '+name1+' and '+name2+' begins.\n'+mesSendString;
                         }else{
                             mesSendString = '<START>\n'+mesSendString;
-                        }
-
-                        let multiprompt = [];
-                        if(multichat) {
-                            let participants = [ name1, name2 ];
-                            this_invited_ids.forEach(chid => {
-                                const char = characters[chid];
-                                if(char) {
-                                    participants.push(char.name);
-                                    if(char.description) {
-                                        multiprompt.push(char.name + "'s Persona: " +
-                                            char.description
-                                            .replace(/{{user}}/gi, name1)
-                                            .replace(/{{char}}/gi, char.name)
-                                            .replace(/<USER>/gi, name1)
-                                            .replace(/<BOT>/gi, char.name)
-                                        );
-                                    }
-                                    if(char.personality) {
-                                        multiprompt.push("Personality: " +
-                                            char.personality
-                                            .replace(/{{user}}/gi, name1)
-                                            .replace(/{{char}}/gi, char.name)
-                                            .replace(/<USER>/gi, name1)
-                                            .replace(/<BOT>/gi, char.name)
-                                        );
-                                    }
-                                }
-                            });
-                            if(!mesSendString) {
-                                mesSendString = '\nThen the roleplay chat between ' + participants.join(" and ") + ' begins.\n'+mesSendString;
-                            }
-                            multiprompt = multiprompt.join("\n") + (multiprompt.length ? "\n" : "");
-                        } else {
-                            multiprompt = "";
                         }
 
                         finalPromt = storyString+mesExmString+multiprompt+mesSendString+generatedPromtCache;
@@ -2322,6 +2370,7 @@
                                 $('#multichat_checkbox').prop("checked", true);
                             }
 
+                            multi_priority = settings.multi_priority || null;
                             
                             //Novel
                             if(settings.main_api != undefined){
@@ -2489,6 +2538,7 @@
                             style_anchor: style_anchor,
                             character_anchor: character_anchor,
                             multichat: multichat,
+                            multi_priority: multi_priority,
                             main_api: main_api,
                             api_key_novel: api_key_novel,
                             rep_pen: rep_pen,
