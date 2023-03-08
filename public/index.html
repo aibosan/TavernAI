@@ -590,7 +590,7 @@
                 }
                 messageText = messageFormating(messageText, characterName);
                 
-                $("#chat").append( "<div class='mes' mesid="+count_view_mes+" ch_name="+characterName+"><div class='for_checkbox'></div><input type='checkbox' class='del_checkbox'><div class=avatar><img src='"+avatarImg+"'></div><div class=mes_block><div class=ch_name><select style='display:none' class='name_select'></select><span class='char_name'>"+characterName+"</span><div title=Edit class=mes_edit><img src=img/scroll.png style='width:20px;height:20px;'></div><div class=mes_edit_cancel><img src=img/cancel.png></div><div class=mes_up><img src=img/arrow_up.png></div><div class=mes_down><img src=img/arrow_down.png></div><div class=mes_edit_done><img src=img/done.png></div></div><div class=mes_text>"+"</div></div></div>" );
+                $("#chat").append( "<div class='mes' mesid="+count_view_mes+" chid="+(mes.is_user ? "-1" : chid)+" ch_name="+characterName+"><div class='for_checkbox'></div><input type='checkbox' class='del_checkbox'><div class=avatar><img src='"+avatarImg+"'></div><div class=mes_block><div class=ch_name><select style='display:none' class='name_select'></select><span class='char_name'>"+characterName+"</span><div title=Edit class=mes_edit><img src=img/scroll.png style='width:20px;height:20px;'></div><div class=mes_edit_cancel title='Cancel changes'><img src=img/cancel.png></div><div class=mes_edit_clone title='Create copy'><img src=img/clone.png></div><div class=mes_edit_delete title='Delete'><img src=img/del_mes.png></div><div class=mes_up title='Move up'><img src=img/arrow_up.png></div><div class=mes_down><img src=img/arrow_down.png title='Move down'></div><div class=mes_edit_done><img src=img/done.png></div></div><div class=mes_text>"+"</div></div></div>" );
                 
                 if(!if_typing_text){
                     //console.log(messageText);
@@ -2693,6 +2693,8 @@
                     $(this).parent().children('.mes_up').attr('class', this_edit_mes_id == 0 ? "mes_up disabled" : "mes_up");
                     $(this).parent().children('.mes_down').css('display','inline-block');
                     $(this).parent().children('.mes_down').attr('class', this_edit_mes_id == chat.length - 1 ? "mes_down disabled" : "mes_down");
+                    $(this).parent().children('.mes_edit_clone').css('display','inline-block');
+                    $(this).parent().children('.mes_edit_delete').css('display','inline-block');
                     $(this).parent().children('.mes_edit_done').css('display','inline-block');
                     $(this).parent().children('.mes_edit_done').css('opacity',0.0);
                     $(this).parent().children('.mes_edit_cancel').css('display','inline-block');
@@ -2734,6 +2736,31 @@
                         $("#chat").scrollTop(chatScrollPosition);
                     }
                 }
+            });
+            $(document).on('click', '.mes_edit_clone', function(){
+                this_edit_mes_id = parseInt(this_edit_mes_id);
+                let clone = JSON.parse(JSON.stringify(chat[this_edit_mes_id]));
+                clone.send_date++;
+                chat.splice(this_edit_mes_id, 0, clone);
+                this_edit_target_id = undefined;
+                this_edit_mes_id = undefined;
+                saveChat();
+                clearChat();
+                chat.length = 0;
+                getChat();
+            });
+            $(document).on('click', '.mes_edit_delete', function(){
+                if(!confirm("Are you sure you want to delete this message?")) {
+                    return;
+                }
+                this_edit_mes_id = parseInt(this_edit_mes_id);
+                chat.splice(this_edit_mes_id, 1);
+                this_edit_target_id = undefined;
+                this_edit_mes_id = undefined;
+                saveChat();
+                clearChat();
+                chat.length = 0;
+                getChat();
             });
             $(document).on('change', '.name_select', function(){
                 let to_chid = parseInt($(this).val());
@@ -2816,6 +2843,8 @@
                 div.parent().children('.name_select').css("display", "none");
                 div.parent().children('.mes_up').css('display','none');
                 div.parent().children('.mes_down').css('display','none');
+                div.parent().children('.mes_edit_clone').css('display','none');
+                div.parent().children('.mes_edit_delete').css('display','none');
                 div.parent().children('.mes_edit_cancel').css('display','none');
                 div.parent().children('.mes_edit').css('display','inline-block');
                 div.parent().parent().children('.mes_text').append(messageFormating(text,this_edit_mes_chname));
