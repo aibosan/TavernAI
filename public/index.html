@@ -950,6 +950,9 @@
                                             tail = characters[speakerId].name + ":";
                                         }
                                     }
+                                    if(kobold_singleline) {
+                                        this_last_speaker_id = null;    // to prevent character to hog the spotlight
+                                    }
                                     if(tail || multi_priority !== "mixed") {
                                         break;
                                     }
@@ -966,7 +969,9 @@
                                         this_last_speaker_id = options[Math.floor(Math.random() * options.length)];
                                         tail = characters[this_last_speaker_id].name + ":";
                                     }
-                                    console.warn(tail);
+                                    if(kobold_singleline) {
+                                        this_last_speaker_id = null;    // to prevent character to hog the spotlight
+                                    }
                                     if(tail) {
                                         break;
                                     }
