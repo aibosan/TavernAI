@@ -100,6 +100,7 @@
             var this_edit_mes_text = '';
             var this_edit_mes_chname = '';
             var this_edit_mes_id;
+            var this_edit_target_id = undefined;
             
             const delay = ms => new Promise(res => setTimeout(res, ms));
             //settings
@@ -312,7 +313,7 @@
                         this_avatar = "characters/"+item.avatar+"#"+Date.now();
 
                     }
-                    $("#rm_print_charaters_block").prepend('<div class=character_select chid='+i+'><div class=avatar><img src="'+this_avatar+'"></div><div class=ch_name>'+item.name+'</div></div>');
+                    $("#rm_print_charaters_block").prepend('<div class=character_select chid='+i+'><div class=avatar><img src="'+this_avatar+'"></div><div class=ch_name><select style=\'display:none\' class=\'name_select\'></select><span class="char_name">'+item.name+'</span></div></div>');
                     //console.log(item.name);
                 });
                 
@@ -588,7 +589,7 @@
                 }
                 messageText = messageFormating(messageText, characterName);
                 
-                $("#chat").append( "<div class='mes' mesid="+count_view_mes+" ch_name="+characterName+"><div class='for_checkbox'></div><input type='checkbox' class='del_checkbox'><div class=avatar><img src='"+avatarImg+"'></div><div class=mes_block><div class=ch_name>"+characterName+"<div title=Edit class=mes_edit><img src=img/scroll.png style='width:20px;height:20px;'></div><div class=mes_edit_cancel><img src=img/cancel.png></div><div class=mes_edit_done><img src=img/done.png></div></div><div class=mes_text>"+"</div></div></div>" );
+                $("#chat").append( "<div class='mes' mesid="+count_view_mes+" ch_name="+characterName+"><div class='for_checkbox'></div><input type='checkbox' class='del_checkbox'><div class=avatar><img src='"+avatarImg+"'></div><div class=mes_block><div class=ch_name><select style='display:none' class='name_select'></select><span class='char_name'>"+characterName+"</span><div title=Edit class=mes_edit><img src=img/scroll.png style='width:20px;height:20px;'></div><div class=mes_edit_cancel><img src=img/cancel.png></div><div class=mes_up><img src=img/arrow_up.png></div><div class=mes_down><img src=img/arrow_down.png></div><div class=mes_edit_done><img src=img/done.png></div></div><div class=mes_text>"+"</div></div></div>" );
                 
                 if(!if_typing_text){
                     //console.log(messageText);
@@ -2655,8 +2656,32 @@
                         let mes_edited = $('#chat').children().filter('[mesid="'+this_edit_mes_id+'"]').children('.mes_block').children('.ch_name').children('.mes_edit_done');
                         messageEditDone(mes_edited);
                     }
+                    var edit_mes_id = $(this).parent().parent().parent().attr('mesid');
+                    this_edit_mes_id = edit_mes_id;
+
                     $(this).parent().parent().children('.mes_text').empty();
                     $(this).css('display','none');
+                    $(this).parent().children('.char_name').css("display", "none");
+                    let select = $(this).parent().children('.name_select');
+                    select.empty();
+                    select.append('<option value="-1" class="player"'+ (chat[this_edit_mes_id].is_user ? " selected=\"selected\"" : "") +'>'+name1+'</option>');
+                    select.append('<option value="'+this_chid+'" class="host"'+ (chat[this_edit_mes_id].chid == parseInt(this_chid) ? " selected=\"selected\"" : "") +'>'+name2+'</option>');
+                    let usedChars = [ parseInt(this_chid) ];
+                    this_invited_ids.forEach(char_id => {
+                        select.append('<option value="'+char_id+'" class="invited"'+ (chat[this_edit_mes_id].chid == char_id ? " selected=\"selected\"" : "") +'>'+characters[char_id].name+'</option>');
+                        usedChars.push(char_id);
+                    });
+                    characters.forEach((char, char_id) => {
+                        if(usedChars.indexOf(char_id) < 0) {
+                            select.append('<option class="uninvited" value="'+char_id+'"'+ (chat[this_edit_mes_id].chid == char_id ? " selected=\"selected\"" : "") +'>'+char.name+'</option>');
+                        }
+                    });
+                    select.css("display", "inline-block");
+
+                    $(this).parent().children('.mes_up').css('display','inline-block');
+                    $(this).parent().children('.mes_up').attr('class', this_edit_mes_id == 0 ? "mes_up disabled" : "mes_up");
+                    $(this).parent().children('.mes_down').css('display','inline-block');
+                    $(this).parent().children('.mes_down').attr('class', this_edit_mes_id == chat.length - 1 ? "mes_down disabled" : "mes_down");
                     $(this).parent().children('.mes_edit_done').css('display','inline-block');
                     $(this).parent().children('.mes_edit_done').css('opacity',0.0);
                     $(this).parent().children('.mes_edit_cancel').css('display','inline-block');
@@ -2673,8 +2698,6 @@
                             easing: "",
                             complete: function() {  }
                     });
-                    var edit_mes_id = $(this).parent().parent().parent().attr('mesid');
-                    this_edit_mes_id = edit_mes_id;
                     
                     var text = chat[edit_mes_id]['mes'];
                     if(chat[edit_mes_id]['is_user']){
@@ -2701,15 +2724,64 @@
                     }
                 }
             });
+            $(document).on('change', '.name_select', function(){
+                let to_chid = parseInt($(this).val());
+                let toAvatar;
+                if(to_chid < 0) {
+                    toAvatar = "User Avatars/" + user_avatar;
+                } else {
+                    toAvatar = "characters/" + characters[to_chid].avatar;
+                }
+                $(this).parent().parent().parent().children(".avatar").children().eq(0).attr("src", toAvatar + "#t=" + Date.now());
+            });
+            $(document).on('click', '.mes_up', function(){
+                if(this_edit_mes_id <= 0 && this_edit_target_id === undefined) { return; }
+                this_edit_mes_id = parseInt(this_edit_mes_id);
+                if(this_edit_target_id === undefined) {
+                    this_edit_target_id = this_edit_mes_id - 1;
+                } else {
+                    this_edit_target_id--;
+                }
+                $(this).parent().parent().parent().attr('mesid', this_edit_mes_id-1);
+                $(this).parent().parent().parent().prev().attr('mesid', this_edit_mes_id);
+                $(this).parent().parent().parent().insertBefore($(this).parent().parent().parent().prev());
+                $(this).parent().children('.mes_up').attr('class', this_edit_target_id == 0 ? "mes_up disabled" : "mes_up");
+                $(this).parent().children('.mes_down').attr('class', this_edit_target_id == chat.length - 1 ? "mes_down disabled" : "mes_down");
+            });
+            $(document).on('click', '.mes_down', function(){
+                if(this_edit_mes_id >= chat.length-1 && this_edit_target_id === undefined) { return; }
+                this_edit_mes_id = parseInt(this_edit_mes_id);
+                if(this_edit_target_id === undefined) {
+                    this_edit_target_id = this_edit_mes_id + 1;
+                } else {
+                    this_edit_target_id++;
+                }
+                $(this).parent().parent().parent().attr('mesid', this_edit_mes_id+1);
+                $(this).parent().parent().parent().prev().attr('mesid', this_edit_mes_id);
+                $(this).parent().parent().parent().insertAfter($(this).parent().parent().parent().next());
+                $(this).parent().children('.mes_up').attr('class', this_edit_target_id == 0 ? "mes_up disabled" : "mes_up");
+                $(this).parent().children('.mes_down').attr('class', this_edit_target_id == chat.length - 1 ? "mes_down disabled" : "mes_down");
+            });
             $(document).on('click', '.mes_edit_cancel', function(){
                 //var text = $(this).parent().parent().children('.mes_text').children('.edit_textarea').val();
                 var text = chat[this_edit_mes_id]['mes'];
-                
+                const toAvatar = chat[this_edit_mes_id].is_user ? "User Avatars/" + user_avatar : "characters/" + characters[chat[this_edit_mes_id].chid].avatar;
+                $(this).parent().children('.name_select').css("display", "none");
+                $(this).parent().parent().parent().children(".avatar").children().eq(0).attr("src", toAvatar + "#t=" + Date.now());
                 $(this).parent().parent().children('.mes_text').empty();
                 $(this).css('display','none');
+                $(this).parent().children('.char_name').css("display", "inline");
+                $(this).parent().children('.mes_up').css('display','none');
+                $(this).parent().children('.mes_down').css('display','none');
                 $(this).parent().children('.mes_edit_done').css('display','none');
                 $(this).parent().children('.mes_edit').css('display','inline-block');
                 $(this).parent().parent().children('.mes_text').append(messageFormating(text,this_edit_mes_chname));
+                if(this_edit_target_id !== undefined && this_edit_target_id !== null) {
+                    clearChat();
+                    chat.length = 0;
+                    getChat();
+                }
+                this_edit_target_id = undefined;
                 this_edit_mes_id = undefined;
             });
             $(document).on('click', '.mes_edit_done', function(){
@@ -2720,12 +2792,43 @@
                 var text = div.parent().parent().children('.mes_text').children('.edit_textarea').val();
                 //var text = chat[this_edit_mes_id];
                 text = text.trim();
-                chat[this_edit_mes_id]['mes'] = text;
+                const message = chat[this_edit_mes_id];
+                let authorId = parseInt(div.parent().children(".name_select").val());
+                message.is_user = authorId < 0;
+                message.chid = authorId < 0 ? null : authorId;
+                message.name = authorId < 0 ? name1 : characters[authorId].name;
+                message['mes'] = text;
+                div.parent().children('.char_name').html(message.name);
                 div.parent().parent().children('.mes_text').empty();
                 div.css('display','none');
+                div.parent().children('.char_name').css("display", "inline");
+                div.parent().children('.name_select').css("display", "none");
+                div.parent().children('.mes_up').css('display','none');
+                div.parent().children('.mes_down').css('display','none');
                 div.parent().children('.mes_edit_cancel').css('display','none');
                 div.parent().children('.mes_edit').css('display','inline-block');
                 div.parent().parent().children('.mes_text').append(messageFormating(text,this_edit_mes_chname));
+                this_edit_target_id = parseInt(this_edit_target_id);
+                this_edit_mes_id = parseInt(this_edit_mes_id);
+                if(!Number.isNaN(this_edit_target_id) && this_edit_target_id !== this_edit_mes_id) {
+                    let date = chat[this_edit_mes_id].send_date;
+                    chat.splice(this_edit_target_id, 0, chat.splice(this_edit_mes_id, 1)[0]);
+                    if(this_edit_target_id < this_edit_mes_id) {
+                        for(let i = this_edit_target_id; i < this_edit_mes_id; i++) {
+                            chat[i].send_date = chat[i+1].send_date;
+                        }
+                        chat[this_edit_mes_id].send_date = date;
+                    } else {
+                        for(let i = this_edit_target_id; i > this_edit_mes_id; i--) {
+                            chat[i].send_date = chat[i-1].send_date;
+                        }
+                        chat[this_edit_mes_id].send_date = date;
+                    }
+                    for(let i = 0; i < div.parent().parent().parent().parent().children().length; i++) {
+                        div.parent().parent().parent().parent().children().eq(i).attr("mesid", i);
+                    }
+                }
+                this_edit_target_id = undefined;
                 this_edit_mes_id = undefined;
                 saveChat();
             }

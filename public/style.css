@@ -992,6 +992,7 @@ select {
 #title_api{
     margin-left: 3px;
 }
+.name_select,
 #settings_perset{
     width:284px;
     margin-left: 10px;
@@ -1116,17 +1117,25 @@ input[type="range"] {
     margin-right: 4px;
     opacity:0.07;
 }
+.mes_up,
+.mes_down,
 .mes_edit_done{
     display: none;
     float:right;
     right:8px;
     cursor:pointer;
     margin-right: 15px;
-    opacity:0.5;
+    opacity:0.75;
 }
+.mes_up img,
+.mes_down img,
 .mes_edit_done img{
     width: 23px;
     height: 23px;
+}
+.mes_up.disabled, .mes_down.disabled {
+    pointer-events: none;
+    opacity: 0.25;
 }
 .mes_edit_cancel{
     display: none;
@@ -1148,6 +1157,13 @@ input[type="range"] {
     outline: none;
     box-shadow: none;
     background-color: transparent;
+}
+.name_select {
+    margin: 0px;
+    padding: 0px;
+    max-width: 50%;
+    height: 1.25em;
+    font-size: 80%;
 }
 #your_name{
     outline: none;
