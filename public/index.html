@@ -59,7 +59,7 @@
             var multichat = false;
 
             var multi_priority = null; /* default, context, talkativeness, mixed */
-            
+
             var is_advanced_char_open = false;
             
             var menu_type = '';//what is selected in the menu
@@ -73,7 +73,7 @@
             var create_save_scenario = '';
             var create_save_mes_example = '';
             var talkativeness = 3;
-            
+
             var timerSaveEdit;
             var durationSaveEdit = 200;
             //animation right menu
@@ -101,7 +101,7 @@
             var this_edit_mes_chname = '';
             var this_edit_mes_id;
             var this_edit_target_id = undefined;
-            
+
             const delay = ms => new Promise(res => setTimeout(res, ms));
             //settings
             var settings;
@@ -125,7 +125,8 @@
             var anchor_order = 0;
             var style_anchor = true;
             var character_anchor = true;
-            
+            var kobold_singleline = false;
+
             var main_api = 'kobold';
             //novel settings
             var temp_novel = 0.5;
@@ -1067,6 +1068,9 @@
                         var generate_data;
                         if(main_api == 'kobold'){
                             var generate_data = {prompt: finalPromt, gui_settings: true,max_length: amount_gen,temperature: temp, max_context_length: max_context};
+                            if(kobold_singleline) {
+                                generate_data.singleline = kobold_singleline;
+                            }
                             if(preset_settings != 'gui'){
 
                                 var this_settings = koboldai_settings[koboldai_setting_names[preset_settings]];
@@ -2314,6 +2318,10 @@
                 character_anchor = !!$('#character_anchor').prop('checked');
                 saveSettings();
             });
+            $('#singleline_mode').change(function() {
+                kobold_singleline = !!$('#singleline_mode').prop('checked');
+                saveSettings();
+            });
             $(document).on('input', '#rep_pen', function() {
                 rep_pen = $(this).val();
                 if(isInt(rep_pen)){
@@ -2465,6 +2473,7 @@
                             if(settings.anchor_order !== undefined) anchor_order = parseInt(settings.anchor_order);
                             if(settings.style_anchor !== undefined) style_anchor = !!settings.style_anchor;
                             if(settings.character_anchor !== undefined) character_anchor = !!settings.character_anchor;
+                            if(settings.kobold_singleline !== undefined) kobold_singleline = !!settings.kobold_singleline;
                             rep_pen = settings.rep_pen;
                             rep_pen_size = settings.rep_pen_size;
                             
@@ -2473,11 +2482,12 @@
                             if(isInt(temp)) addZeros = ".00";
                             $('#temp').val(temp);
                             $('#temp_counter').html(temp+addZeros);
-                            
+
                             $('#style_anchor').prop('checked', style_anchor);
                             $('#character_anchor').prop('checked', character_anchor);
                             $("#anchor_order option[value="+anchor_order+"]").attr('selected', 'true');
-                            
+                            $('#singleline_mode').prop('checked', kobold_singleline);
+
                             $('#max_context').val(max_context);
                             $('#max_context_counter').html(max_context+' Tokens');
                             
@@ -2577,6 +2587,7 @@
                             character_anchor: character_anchor,
                             multichat: multichat,
                             multi_priority: multi_priority,
+                            kobold_singleline: kobold_singleline,
                             main_api: main_api,
                             api_key_novel: api_key_novel,
                             rep_pen: rep_pen,
@@ -3546,6 +3557,10 @@
                     <label class="checkbox" title="Allows you to invite multiple characters to the conversation. Requires restart.">
                         <input id="multichat_checkbox" type="checkbox"/><span></span>
                     </label><h4>Multichat</h4>
+                    <label class="checkbox" title="With KoboldAI, the responses are only one line long, but are generated quicker.">
+                        <input id="singleline_mode" type="checkbox"/><span></span>
+                    </label><h4 title="With KoboldAI, the responses are only one line long, but are generated quicker.">Singleline mode</h4>
+
                 </div>
             </div>
         </div>
