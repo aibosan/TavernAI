@@ -494,6 +494,9 @@
                 return mes;
             }
             function addOneMessage(mes){
+                if(!mes.uid) {
+                    mes.uid = Date.now() + "-" + Math.floor(Math.random()*100000);
+                }
                 //var message = mes['mes'];
                 //message = mes['mes'].replace(/^\s+/g, '');
                 //console.log(message.indexOf(name1+":"));
@@ -533,8 +536,14 @@
                     messageText = messageText.replace(/<BOT>/gi, name2);
                 }
                 messageText = messageFormating(messageText, characterName);
-                
-                $("#chat").append( "<div class='mes' mesid="+count_view_mes+" ch_name="+characterName+"><div class='for_checkbox'></div><input type='checkbox' class='del_checkbox'><div class=avatar><img src='"+avatarImg+"'></div><div class=mes_block><div class=ch_name>"+characterName+"<div title=Edit class=mes_edit><img src=img/scroll.png style='width:20px;height:20px;'></div><div class=mes_edit_cancel><img src=img/cancel.png></div><div class=mes_edit_done><img src=img/done.png></div></div><div class=mes_text>"+"</div></div></div>" );
+
+                let showBranches = mes.branches && mes.branches.length ? "<div" +
+                    " class='mes_show_branches'" +
+                    " original='"+(mes.originalMessage ? mes.originalMessage : mes.uid )+"'" +
+                    " title='Show existing branches'" +
+                    "><img src=img/branch.png></div>" : "";
+
+                $("#chat").append( "<div class='mes' mesid="+count_view_mes+" ch_name="+characterName+"><div class='for_checkbox'></div><input type='checkbox' class='del_checkbox'><div class=avatar><img src='"+avatarImg+"'></div><div class=mes_block><div class=ch_name>"+characterName+"<div title=Edit class=mes_edit><img src=img/scroll.png style='width:20px;height:20px;'></div>"+showBranches+"<div class=mes_edit_cancel><img src=img/cancel.png></div><div class=mes_branch title='Create conversation branch' style='display:none'><img src=img/branch.png></div><div class=mes_edit_done><img src=img/done.png></div></div><div class=mes_text>"+"</div></div></div>" );
                 
                 if(!if_typing_text){
                     //console.log(messageText);
@@ -1094,20 +1103,36 @@
                 }
             }
             
-            async function saveChat() {
-                chat.forEach(function(item, i) {
+            async function saveChat(data, userData) {
+                if(!data) {
+                    data = chat;
+                }
+                if(!userData) {
+                    userData = {
+                        user_name: default_user_name,
+                        character_name: name2,
+                        create_date: chat_create_date,
+                        file_name: characters[this_chid].chat,
+                        avatar_url: characters[this_chid].avatar
+                    }
+                }
+
+                data.forEach(function(item, i) {
                     if(item['is_user']){
-                        var str = item['mes'].replace(name1+':', default_user_name+':');
-                        chat[i]['mes'] = str;
-                        chat[i]['name'] = default_user_name;
+                        item.mes = item.mes.replace(name1+':', default_user_name+':');
+                        item.name = default_user_name;
                     }
                 });
-                var save_chat = [{user_name:default_user_name, character_name:name2,create_date: chat_create_date}, ...chat];
 
                 jQuery.ajax({    
                     type: 'POST', 
                     url: '/savechat', 
-                    data: JSON.stringify({ch_name: characters[this_chid].name, file_name: characters[this_chid].chat, chat: save_chat, avatar_url: characters[this_chid].avatar}),
+                    data: JSON.stringify({
+                        ch_name: userData.character_name,
+                        file_name: userData.file_name,
+                        chat: [userData, ...data],
+                        avatar_url: userData.avatar_url,
+                    }),
                     beforeSend: function(){
                         //$('#create_button').attr('value','Creating...'); 
                     },
@@ -1124,44 +1149,95 @@
                     }
                 });
             }
-            async function getChat() {
-                //console.log(characters[this_chid].chat);
-                jQuery.ajax({    
-                    type: 'POST', 
-                    url: '/getchat', 
-                    data: JSON.stringify({ch_name: characters[this_chid].name, file_name: characters[this_chid].chat, avatar_url: characters[this_chid].avatar}),
-                    beforeSend: function(){
-                        //$('#create_button').attr('value','Creating...'); 
-                    },
-                    cache: false,
-                    dataType: "json",
-                    contentType: "application/json",
-                    success: function(data){
-                        //console.log(data);
-                        //chat.length = 0;
-                        if(data[0] !== undefined){
-                            for (let key in data) {
-                                chat.push(data[key]);
-                            }
-                            //chat =  data;
-                            chat_create_date = chat[0]['create_date'];
-                            chat.shift();
 
-                        }else{
-                            chat_create_date = Date.now();
-                        }
-                        //console.log(chat);
-                        getChatResult();
-                        saveChat();
-                    },
-                    error: function (jqXHR, exception) {
-                        getChatResult();
-                        console.log(exception);
-                        console.log(jqXHR);
-                    }
+            function getChatData(target) {
+                return new Promise((success, failure) => {
+                    jQuery.ajax({
+                        type: 'POST',
+                        url: '/getchat',
+                        data: JSON.stringify(target),
+                        beforeSend: function(){
+                            //$('#create_button').attr('value','Creating...');
+                        },
+                        cache: false,
+                        dataType: "json",
+                        contentType: "application/json",
+                        success: data => success(data),
+                        error: (jqXHR, exception) => failure(jqXHR, exception)
+                    });
                 });
             }
-            
+
+            async function getAndProcessChat(target, stopUid) {
+                if(!target) {
+                    target = {
+                        ch_name: characters[this_chid].name,
+                        file_name: characters[this_chid].chat,
+                        avatar_url: characters[this_chid].avatar
+                    };
+                }
+                let data;
+                try {
+                    data = await getChatData(target);
+                } catch(e) {
+                    throw "File not found!";
+                }
+                if(!data.length) {
+                    return [];
+                }
+                let newChat = [];
+                for(let index in data) {
+                    const item = data[index];
+                    if(item.originalMessage) {
+                        try {
+                            let prependix = await getAndProcessChat({
+                                ch_name: target.ch_name, avatar_url: target.avatar_url, file_name: item.originalChat
+                            }, item.originalMessage);
+                            if(prependix.length) {
+                                newChat = prependix;
+                            } else {
+                                newChat.push(item);
+                                // no file, or original was wiped
+                            }
+                            if(newChat.length) {
+                                newChat[newChat.length-1].originalMessage = item.originalMessage;
+                                newChat[newChat.length-1].originalChat = item.originalChat;
+                                if(newChat[newChat.length-1].branches) {
+                                    let inBr = newChat[newChat.length-1].branches.indexOf(target.file_name);
+                                    if(inBr >= 0) {
+                                        newChat[newChat.length-1].branches.splice(inBr, 1);
+                                    }
+                                    newChat[newChat.length-1].branches.push(item.originalChat);
+                                }
+                            }
+                        } catch(e) {
+                            // file not found
+                        }
+                    } else {
+                        newChat.push(item);
+                        if(stopUid && item.uid == stopUid) {
+                            return newChat;
+                        }
+                    }
+                }
+                return newChat;
+            }
+
+            async function getChat() {
+                try {
+                    let newChat = await getAndProcessChat({
+                        ch_name: characters[this_chid].name,
+                        file_name: characters[this_chid].chat,
+                        avatar_url: characters[this_chid].avatar
+                    });
+                    chat = newChat.filter(item => !item.user_name);
+                    getChatResult();
+                    saveChat();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
             function getChatResult(){
                 name2 = characters[this_chid].name;
                 if(chat.length > 1){
@@ -2409,6 +2485,8 @@
                     $(this).parent().children('.mes_edit_done').css('opacity',0.0);
                     $(this).parent().children('.mes_edit_cancel').css('display','inline-block');
                     $(this).parent().children('.mes_edit_cancel').css('opacity',0.0);
+                    $(this).parent().children('.mes_branch').css('display','inline-block');
+                    $(this).parent().children('.mes_show_branches').css('display','none');
                     $(this).parent().children('.mes_edit_done').transition({  
                             opacity: 1.0,
                             duration: 600,
@@ -2456,6 +2534,8 @@
                 $(this).parent().parent().children('.mes_text').empty();
                 $(this).css('display','none');
                 $(this).parent().children('.mes_edit_done').css('display','none');
+                $(this).parent().children('.mes_branch').css('display','none');
+                $(this).parent().children('.mes_show_branches').css('display','inline');
                 $(this).parent().children('.mes_edit').css('display','inline-block');
                 $(this).parent().parent().children('.mes_text').append(messageFormating(text,this_edit_mes_chname));
                 this_edit_mes_id = undefined;
@@ -2472,11 +2552,114 @@
                 div.parent().parent().children('.mes_text').empty();
                 div.css('display','none');
                 div.parent().children('.mes_edit_cancel').css('display','none');
+                div.parent().children('.mes_branch').css('display','none');
                 div.parent().children('.mes_edit').css('display','inline-block');
+                div.parent().children('.mes_show_branches').css('display','inline');
                 div.parent().parent().children('.mes_text').append(messageFormating(text,this_edit_mes_chname));
                 this_edit_mes_id = undefined;
                 saveChat();
             }
+            $(document).on('click', '.mes_branch', function(){
+                if(!confirm("Branch from the selected point in conversation?")) { return; }
+                let createDate = Date.now();
+                let copyUserData = {
+                    user_name: default_user_name,
+                    character_name: name2,
+                    create_date: createDate,
+                    file_name: characters[this_chid].chat.replace(/-.*/, '') + "-" + createDate,
+                    avatar_url: characters[this_chid].avatar
+                }
+
+                let copyData = [];
+                for(let i = 0; i <= this_edit_mes_id; i++) {
+                    let clone = JSON.parse(JSON.stringify(chat[i]));
+                    chat[i].uid = chat[i].uid || Date.now() + "-" + Math.floor(Math.random()*100000);
+                    clone.uid = Date.now() + "-" + Math.floor(Math.random()*100000);
+                    copyData.push(clone);
+                }
+                if(copyData.length) {
+                    copyData[copyData.length-1].originalChat = characters[this_chid].chat;
+                    copyData[copyData.length-1].originalMessage = chat[this_edit_mes_id].uid;
+                }
+
+                chat[this_edit_mes_id].branches = chat[this_edit_mes_id].branches || [];
+                chat[this_edit_mes_id].branches.push(copyUserData.file_name);
+                saveChat();
+
+                saveChat(copyData, copyUserData);
+
+                // load new conversation
+                characters[this_chid]['chat'] = copyUserData.file_name;
+                clearChat();
+                chat.length = 0;
+                getChat();
+                $('#selected_chat_pole').val(copyUserData.file_name);
+                $("#create_button").click();
+                $('#shadow_select_chat_popup').css('display', 'none');
+                $('#load_select_chat_div').css('display', 'block');
+            });
+
+            $(document).on('click', '.mes_show_branches', function(){
+                let original = $(this).attr("original");
+                $('#select_chat_import').css("display", "none");
+                $('#select_chat_div').html('');
+                let mesId = parseInt($(this).parent().parent().parent().attr('mesid') || "-1");
+                jQuery.ajax({
+                    type: 'POST',
+                    url: '/getcharacterbranches',
+                    data: JSON.stringify({avatar_url: characters[this_chid].avatar, original_message: original}),
+                    beforeSend: function(){
+                        //$('#create_button').attr('value','Creating...');
+                    },
+                    cache: false,
+                    dataType: "json",
+                    contentType: "application/json",
+                    success: function(data){
+                        $('#load_select_chat_div').css('display', 'none');
+                        let count = 0;
+                        if(mesId >= 0) {
+                            chat[mesId].branches = [];
+                        }
+                        for (const key in data) {
+                            count++;
+                            if(mesId >= 0) {
+                                chat[mesId].branches.push(data[key].file_name.replace(/\.jsonl/, ''));
+                            }
+                            let strlen = 40;
+                            let mes = data[key].followup ? data[key].followup.mes : data[key].original.mes;
+                            let isUser = !!data[key].followup && data[key].followup.is_user;
+                            let labels = data[key].root ? " (original)" : "";
+                            let avatar = data[key].followup && data[key].followup.chid !== undefined ? characters[data[key].followup.chid].avatar : characters[this_chid].avatar;
+                            if(mes.length > strlen) {
+                                if(data[key].followup) {
+                                    mes = '...'+mes.substring(mes.length - strlen);
+                                } else {
+                                    mes = '(no followup) ...'+mes.substring(mes.length - strlen - 14);
+                                }
+                            }
+                            $('#select_chat_div').append('<div class="select_chat_block" file_name="'+data[key]['file_name']+'"><div class=avatar><img src="'+(isUser ? "User Avatars/"+user_avatar : "characters/"+avatar)+'" style="width: 33px; height: 51px;"></div><div class="select_chat_block_filename">'+data[key]['file_name']+labels+'</div><div class="select_chat_block_mes">'+mes+'</div></div>');
+                            if(characters[this_chid]['chat'] == data[key]['file_name'].replace('.jsonl', '')){
+                                $('#select_chat_div').children(':nth-last-child(1)').attr('highlight', true);
+                            }
+                        }
+                        if(count <= 1) {
+                            if(mesId >= 0) {
+                                delete chat[mesId].branches;
+                                delete chat[mesId].originalMessage;
+                                delete chat[mesId].originalChat;
+                            }
+                        }
+                        $('#shadow_select_chat_popup').css('display', 'block');
+                        $('#shadow_select_chat_popup').css('opacity', 0.0);
+                        $('#shadow_select_chat_popup').transition({ opacity: 1.0 ,duration: animation_rm_duration, easing:animation_rm_easing});
+                        saveChat();
+                    },
+                    error: function (jqXHR, exception) {
+                        console.log(exception);
+                        console.log(jqXHR);
+                    }
+                });
+            });
             
             $("#your_name_button").click(function() {
                 if(!is_send_press){
@@ -2489,6 +2672,7 @@
             });
             //Select chat
             async function getAllCharaChats() {
+                $('#select_chat_import').css("display", null);
                 $('#select_chat_div').html('');
                 //console.log(characters[this_chid].chat);
                 jQuery.ajax({    
@@ -2766,7 +2950,7 @@
                 $("#create_button").click();
                 $('#shadow_select_chat_popup').css('display', 'none');
                 $('#load_select_chat_div').css('display', 'block');
-
+                this_edit_mes_id = undefined;
             });
         });
     </script>
