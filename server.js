@@ -961,6 +961,73 @@ app.post("/getallchatsofchatacter", jsonParser, function(request, response){
     });
     
 });
+
+app.post("/getcharacterbranches", jsonParser, function(request, response){
+    if(!request.body) return response.sendStatus(400);
+
+    var char_dir = (request.body.avatar_url).replace('.png','')
+    fs.readdir(chatsPath+char_dir, (err, files) => {
+        if (err) {
+            console.error(err);
+            response.send({error: true});
+            return;
+        }
+        const jsonFiles = files.filter(file => path.extname(file) === '.jsonl');
+        var chatData = {};
+        let ii = jsonFiles.length;
+        let j = 0;
+        let followupUids = [];
+        for(let i = jsonFiles.length-1; i >= 0; i--){
+            const file = jsonFiles[i];
+            const fileStream = fs.createReadStream(chatsPath+char_dir+'/'+file);
+            const rl = readline.createInterface({
+                input: fileStream,
+                crlfDelay: Infinity
+            });
+            let keyLine;
+            let nextLine;
+            let isOriginal = false;
+            rl.on('line', (line) => {
+                if(!nextLine || !keyLine) {
+                    const parsed = JSON.parse(line);
+                    if(!nextLine && keyLine) {
+                        nextLine = parsed;
+                    }
+                    if(parsed.uid == request.body.original_message || parsed.originalMessage == request.body.original_message) {
+                        keyLine = parsed;
+                        if(!parsed.originalMessage) {
+                            isOriginal = true;
+                        }
+                    }
+                }
+            });
+            rl.on('close', () => {
+                if(keyLine && keyLine.name !== undefined){
+                    if(!nextLine || followupUids.indexOf(nextLine.uid) < 0) {
+                        chatData[j] = {
+                            file_name: file,
+                            original: keyLine,
+                            followup: nextLine || null,
+                            root: isOriginal,
+                        };
+                        if(nextLine) {
+                            // filters out previous branches
+                            followupUids.push(nextLine.uid);
+                        }
+                        j++;
+                    }
+                }
+                ii--;
+                if(ii === 0){
+                    response.send(chatData);
+                }
+                rl.close();
+            });
+        }
+    });
+
+});
+
 function getPngName(file){
     let i = 1;
     let base_name = file;

@@ -1117,6 +1117,8 @@ input[type="range"] {
     margin-right: 4px;
     opacity:0.07;
 }
+.mes_show_branches,
+.mes_branch,
 .mes_up,
 .mes_down,
 .mes_edit_done{
@@ -1127,11 +1129,21 @@ input[type="range"] {
     margin-right: 15px;
     opacity:0.75;
 }
+.mes_show_branches {
+    display: inline;
+    opacity: 0.75;
+    margin-right: 0.25ex;
+}
 .mes_up img,
 .mes_down img,
+.mes_branch img,
 .mes_edit_done img{
     width: 23px;
     height: 23px;
+}
+.mes_show_branches img {
+    width: 20px;
+    height: 20px;
 }
 .mes_up.disabled, .mes_down.disabled {
     pointer-events: none;
