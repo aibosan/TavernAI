@@ -550,7 +550,7 @@
             }
             function addOneMessage(mes){
                 if(!mes.uid) {
-                    mes.uid = Date.now() + "-" + Math.floor(Math.random()*100000);
+                    mes.uid = Date.now() + "-" + ("0000000" + Math.floor(Math.random()*1000000).toString()).substr(-6);
                 }
                 //var message = mes['mes'];
                 //message = mes['mes'].replace(/^\s+/g, '');
@@ -2975,8 +2975,8 @@
                 let copyData = [];
                 for(let i = 0; i <= this_edit_mes_id; i++) {
                     let clone = JSON.parse(JSON.stringify(chat[i]));
-                    chat[i].uid = chat[i].uid || Date.now() + "-" + Math.floor(Math.random()*100000);
-                    clone.uid = Date.now() + "-" + Math.floor(Math.random()*100000);
+                    chat[i].uid = chat[i].uid || Date.now() + "-" + ("0000000" + Math.floor(Math.random()*1000000).toString()).substr(-6);
+                    clone.uid = Date.now() + "-" + ("0000000" + Math.floor(Math.random()*1000000).toString()).substr(-6);
                     copyData.push(clone);
                 }
                 if(copyData.length) {
