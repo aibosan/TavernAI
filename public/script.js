@@ -144,6 +144,7 @@ $(document).ready(function(){
     
     var lock_context_size = false;
     var multigen = false;
+    var noCharaCloud = false;
     var swipes = false;
     var keep_dialog_examples = false;
     var free_char_name_mode = false;
@@ -247,18 +248,20 @@ $(document).ready(function(){
         //$('#bg_chara_cloud').css('display', 'block');
         
         $('#chara_cloud').css('opacity', 0.0);
-        $('#chara_cloud').transition({  
-            opacity: 1.0,
-            delay: 0,
-            duration: 0,
-            queue: true,
-            easing: "ease-in-out",
-                complete: function() {  
-                    
-            
-            
-            }
-        });
+        if(!noCharaCloud) {
+            $('#chara_cloud').transition({
+                opacity: 1.0,
+                delay: 0,
+                duration: 0,
+                queue: true,
+                easing: "ease-in-out",
+                    complete: function() {
+
+
+
+                }
+            });
+        }
         $('#characloud_search_form').transition({  
                     opacity: 1.0,
                     delay: 270,
@@ -2744,6 +2747,10 @@ $(document).ready(function(){
         multigen = !!$('#multigen').prop('checked');
         saveSettings();
     });
+    $('#hide_chara_cloud').change(function() {
+        noCharaCloud = !!$('#hide_chara_cloud').prop('checked');
+        saveSettings();
+    });
     $('#swipes').change(function() {
         swipes = !!$('#swipes').prop('checked');
         if(swipes){
@@ -3160,6 +3167,7 @@ $(document).ready(function(){
                     character_anchor = !!settings.character_anchor;//if(settings.character_anchor !== undefined) character_anchor = !!settings.character_anchor;
                     lock_context_size = !!settings.lock_context_size;
                     multigen = !!settings.multigen;
+                    noCharaCloud = !!settings.hide_chara_cloud;
                     swipes = !!settings.swipes;
                     keep_dialog_examples = !!settings.keep_dialog_examples;
                     free_char_name_mode = !!settings.free_char_name_mode;
@@ -3168,10 +3176,15 @@ $(document).ready(function(){
                     $('#character_anchor').prop('checked', character_anchor);
                     $('#lock_context_size').prop('checked', lock_context_size);
                     $('#multigen').prop('checked', multigen);
+                    $('#hide_chara_cloud').prop('checked', noCharaCloud);
                     $('#swipes').prop('checked', swipes);
                     $('#keep_dialog_examples').prop('checked', keep_dialog_examples);
                     $('#free_char_name_mode').prop('checked', free_char_name_mode);
-                    
+
+                    if(noCharaCloud) {
+                        $("#chara_cloud").css("opacity", "0");
+                    }
+
                     $("#anchor_order option[value="+anchor_order+"]").attr('selected', 'true');
                     $("#pygmalion_formating option[value="+pygmalion_formating+"]").attr('selected', 'true');
                     //////////////////////
@@ -3298,6 +3311,7 @@ $(document).ready(function(){
                     character_anchor: character_anchor,
                     lock_context_size: lock_context_size,
                     multigen: multigen,
+                    hide_chara_cloud: noCharaCloud,
                     swipes: swipes,
                     keep_dialog_examples: keep_dialog_examples,
                     free_char_name_mode: free_char_name_mode,
